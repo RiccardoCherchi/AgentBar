@@ -39,17 +39,24 @@ public struct CodexCredentialResult: @unchecked Sendable {
 /// ```
 public struct CodexCredentialLoader: Sendable {
     private let homeDirectory: String
+    /// Explicit Codex home (its `auth.json` lives directly here). When set this
+    /// wins over `homeDirectory`; used to target a per-account `CODEX_HOME`.
+    private let codexHome: String?
 
     /// Refresh age threshold: 8 days (matching Codex JS reference)
     private static let refreshAgeMs: Double = 8 * 24 * 60 * 60 * 1000
 
-    public init(homeDirectory: String = NSHomeDirectory()) {
+    public init(homeDirectory: String = NSHomeDirectory(), codexHome: String? = nil) {
         self.homeDirectory = homeDirectory
+        self.codexHome = codexHome
     }
 
     /// The path to the auth file.
     public var authFilePath: String {
-        (homeDirectory as NSString).appendingPathComponent(".codex/auth.json")
+        if let codexHome {
+            return (codexHome as NSString).appendingPathComponent("auth.json")
+        }
+        return (homeDirectory as NSString).appendingPathComponent(".codex/auth.json")
     }
 
     /// Loads credentials from `~/.codex/auth.json`.

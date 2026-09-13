@@ -8,6 +8,10 @@ public struct DefaultCLIExecutor: CLIExecutor {
     /// preventing tokens like `CLAUDE_CODE_OAUTH_TOKEN` from being inherited.
     private let environmentExclusions: [String]
 
+    /// Environment variables to add/override for the subprocess. Used to point
+    /// a CLI at a per-account config directory (e.g. `CLAUDE_CONFIG_DIR`).
+    private let environment: [String: String]
+
     /// Rule that tells the PTY run when the screen has settled. Without one, any
     /// idle gap ends the capture, truncating TUIs that fill in asynchronously
     /// (issue #271).
@@ -15,9 +19,11 @@ public struct DefaultCLIExecutor: CLIExecutor {
 
     public init(
         environmentExclusions: [String] = [],
+        environment: [String: String] = [:],
         completionRule: CLICompletionRule? = nil
     ) {
         self.environmentExclusions = environmentExclusions
+        self.environment = environment
         self.completionRule = completionRule
     }
 
@@ -43,6 +49,7 @@ public struct DefaultCLIExecutor: CLIExecutor {
             arguments: args,
             autoResponses: autoResponses,
             environmentExclusions: environmentExclusions,
+            environment: environment,
             completionRule: completionRule
         )
         let inputText = input ?? ""

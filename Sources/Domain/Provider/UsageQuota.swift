@@ -93,6 +93,27 @@ public struct UsageQuota: Sendable, Equatable, Hashable, Comparable {
 
     // MARK: - Domain Behavior
 
+    /// Returns a copy of this quota tagged as belonging to a group (an upstream
+    /// account on an aggregating provider). `compactTitle` is preserved unless
+    /// the caller supplies one.
+    public func withGroup(_ group: String, compactTitle: String? = nil) -> UsageQuota {
+        UsageQuota(
+            percentRemaining: percentRemaining,
+            quotaType: quotaType,
+            providerId: providerId,
+            resetsAt: resetsAt,
+            resetText: resetText,
+            windowDuration: windowDuration,
+            dollarRemaining: dollarRemaining,
+            dollarUsed: dollarUsed,
+            dollarCap: dollarCap,
+            group: group,
+            compactTitle: compactTitle ?? self.compactTitle,
+            menuBarTitle: menuBarTitle,
+            currency: currency
+        )
+    }
+
     /// The current health status based on percentage remaining.
     /// This is a domain rule: status is determined by business thresholds.
     public var status: QuotaStatus {

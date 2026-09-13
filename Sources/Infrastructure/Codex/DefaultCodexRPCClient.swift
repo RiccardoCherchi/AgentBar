@@ -7,16 +7,23 @@ public final class DefaultCodexRPCClient: CodexRPCClient, @unchecked Sendable {
     private let executable: String
     private let cliExecutor: CLIExecutor
     private let transport: RPCTransport?
+    /// Extra environment for the spawned `codex` process (e.g. a per-account `CODEX_HOME`).
+    private let environment: [String: String]
     private var nextID = 1
 
     /// Package-internal: allows tests to inject a mock transport for the production (no-injection) code path.
     var transportFactory: ((String, [String]) throws -> RPCTransport)?
 
     /// Default initializer - uses real CLI executor and creates transport lazily.
-    public init(executable: String = "codex", cliExecutor: CLIExecutor? = nil) {
+    public init(
+        executable: String = "codex",
+        cliExecutor: CLIExecutor? = nil,
+        environment: [String: String] = [:]
+    ) {
         self.executable = executable
-        self.cliExecutor = cliExecutor ?? DefaultCLIExecutor()
+        self.cliExecutor = cliExecutor ?? DefaultCLIExecutor(environment: environment)
         self.transport = nil
+        self.environment = environment
     }
 
     /// Internal initializer for testing with mock transport.
@@ -24,6 +31,7 @@ public final class DefaultCodexRPCClient: CodexRPCClient, @unchecked Sendable {
         self.executable = "codex"
         self.cliExecutor = cliExecutor ?? DefaultCLIExecutor()
         self.transport = transport
+        self.environment = [:]
     }
 
     /// Arguments every Codex invocation gets, for both the app-server and the
@@ -71,7 +79,17 @@ public final class DefaultCodexRPCClient: CodexRPCClient, @unchecked Sendable {
             ownsTransport = false
         } else {
             let factory = transportFactory ?? { exec, args in
-                try ProcessRPCTransport(executable: exec, arguments: args)
+                // ProcessRPCTransport takes the full environment, so merge the
+                // per-account overrides over the inherited one instead of
+                // replacing it (HOME, PATH, ... must survive).
+                let merged = self.environment.isEmpty
+                    ? nil
+                    : ProcessInfo.processInfo.environment.merging(self.environment) { _, new in new }
+                return try ProcessRPCTransport(
+                    executable: exec,
+                    arguments: args,
+                    environment: merged
+                )
             }
             activeTransport = try factory(executable, Self.baseArguments + ["app-server"])
             ownsTransport = true

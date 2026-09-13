@@ -97,6 +97,11 @@ public final class ClaudeProvider: AIProvider {
     /// Optional analyzer for daily usage from JSONL session data
     private let dailyUsageAnalyzer: (any DailyUsageAnalyzing)?
 
+    /// Optional multi-account support. When accounts are configured, each is
+    /// probed with its own probe instead of the single global active probe.
+    private let accountRepository: (any MultiAccountSettingsRepository)?
+    private let accountProbeFactory: (@Sendable (ProviderAccountConfig) -> any UsageProbe)?
+
     /// Returns the active probe based on current mode
     private var activeProbe: any UsageProbe {
         switch probeMode {
@@ -119,13 +124,17 @@ public final class ClaudeProvider: AIProvider {
         probe: any UsageProbe,
         passProbe: (any ClaudePassProbing)? = nil,
         settingsRepository: any ProviderSettingsRepository,
-        dailyUsageAnalyzer: (any DailyUsageAnalyzing)? = nil
+        dailyUsageAnalyzer: (any DailyUsageAnalyzing)? = nil,
+        accountRepository: (any MultiAccountSettingsRepository)? = nil,
+        accountProbeFactory: (@Sendable (ProviderAccountConfig) -> any UsageProbe)? = nil
     ) {
         self.cliProbe = probe
         self.apiProbe = nil
         self.passProbe = passProbe
         self.settingsRepository = settingsRepository
         self.dailyUsageAnalyzer = dailyUsageAnalyzer
+        self.accountRepository = accountRepository
+        self.accountProbeFactory = accountProbeFactory
         // Load persisted enabled state (defaults to true)
         self.isEnabled = settingsRepository.isEnabled(forProvider: "claude")
     }
@@ -141,13 +150,17 @@ public final class ClaudeProvider: AIProvider {
         apiProbe: any UsageProbe,
         passProbe: (any ClaudePassProbing)? = nil,
         settingsRepository: any ClaudeSettingsRepository,
-        dailyUsageAnalyzer: (any DailyUsageAnalyzing)? = nil
+        dailyUsageAnalyzer: (any DailyUsageAnalyzing)? = nil,
+        accountRepository: (any MultiAccountSettingsRepository)? = nil,
+        accountProbeFactory: (@Sendable (ProviderAccountConfig) -> any UsageProbe)? = nil
     ) {
         self.cliProbe = cliProbe
         self.apiProbe = apiProbe
         self.passProbe = passProbe
         self.settingsRepository = settingsRepository
         self.dailyUsageAnalyzer = dailyUsageAnalyzer
+        self.accountRepository = accountRepository
+        self.accountProbeFactory = accountProbeFactory
         // Load persisted enabled state (defaults to true)
         self.isEnabled = settingsRepository.isEnabled(forProvider: "claude")
     }
@@ -194,6 +207,22 @@ public final class ClaudeProvider: AIProvider {
     public func refresh(_ kind: RefreshKind) async throws -> UsageSnapshot {
         isSyncing = true
         defer { isSyncing = false }
+
+        if let accounts = configuredAccounts, let factory = accountProbeFactory {
+            do {
+                let aggregated = try await AccountProbeAggregation.refresh(
+                    providerId: id,
+                    accounts: accounts,
+                    makeProbe: factory
+                )
+                snapshot = aggregated
+                lastError = nil
+                return aggregated
+            } catch {
+                lastError = error
+                throw error
+            }
+        }
 
         do {
             let newSnapshot = try await primaryProbe().probe()
@@ -267,6 +296,13 @@ public final class ClaudeProvider: AIProvider {
             bedrockUsage: snapshot.bedrockUsage,
             dailyUsageReport: report
         )
+    }
+
+    /// Configured accounts, or nil when multi-account is off/unconfigured.
+    private var configuredAccounts: [ProviderAccountConfig]? {
+        guard let accountRepository else { return nil }
+        let accounts = accountRepository.accounts(forProvider: id)
+        return accounts.isEmpty ? nil : accounts
     }
 
     private func primaryProbe() -> any UsageProbe {

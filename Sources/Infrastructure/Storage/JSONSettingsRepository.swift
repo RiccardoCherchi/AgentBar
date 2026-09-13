@@ -828,6 +828,9 @@ extension JSONSettingsRepository: MultiAccountSettingsRepository {
         if activeAccountId(forProvider: id) == accountId {
             setActiveAccountId(nil, forProvider: id)
         }
+
+        // Clear any per-account secrets so a re-added account starts clean.
+        secureCredentials.delete(forKey: Self.accountSecretKey(id, accountId, "apiKey"))
     }
 
     public func updateAccount(_ config: ProviderAccountConfig, forProvider id: String) {
@@ -845,10 +848,28 @@ extension JSONSettingsRepository: MultiAccountSettingsRepository {
         store.write(value: accountId, key: Self.activeAccountKey(id))
     }
 
+    // MARK: Per-account secrets
+
+    public func accountSecret(forProvider id: String, accountId: String, name: String) -> String? {
+        secureCredentials.get(forKey: Self.accountSecretKey(id, accountId, name))
+    }
+
+    public func setAccountSecret(_ value: String?, forProvider id: String, accountId: String, name: String) {
+        let key = Self.accountSecretKey(id, accountId, name)
+        if let value, !value.isEmpty {
+            secureCredentials.save(value, forKey: key)
+        } else {
+            secureCredentials.delete(forKey: key)
+        }
+    }
+
     // MARK: Storage helpers
 
     private static func accountsKey(_ id: String) -> String { "providers.\(id).accounts" }
     private static func activeAccountKey(_ id: String) -> String { "providers.\(id).activeAccountId" }
+    private static func accountSecretKey(_ id: String, _ accountId: String, _ name: String) -> String {
+        "account.\(id).\(accountId).\(name)"
+    }
 
     private func writeAccounts(_ configs: [ProviderAccountConfig], forProvider id: String) {
         // Persist an empty list as a removal so the file stays free of empty arrays,

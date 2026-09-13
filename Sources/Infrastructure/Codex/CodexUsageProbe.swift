@@ -43,8 +43,8 @@ public struct CodexRateLimitWindow: Sendable, Equatable {
 public struct CodexUsageProbe: UsageProbe {
     private let client: CodexRPCClient
 
-    public init(client: CodexRPCClient? = nil) {
-        self.client = client ?? DefaultCodexRPCClient()
+    public init(client: CodexRPCClient? = nil, environment: [String: String] = [:]) {
+        self.client = client ?? DefaultCodexRPCClient(environment: environment)
     }
 
     public func isAvailable() async -> Bool {

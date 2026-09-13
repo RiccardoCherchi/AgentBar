@@ -62,6 +62,18 @@ public final class CodexProvider: AIProvider {
     /// The settings repository for persisting provider settings
     private let settingsRepository: any ProviderSettingsRepository
 
+    /// Optional multi-account support. When accounts are configured, each is
+    /// probed with its own probe instead of the single global active probe.
+    private let accountRepository: (any MultiAccountSettingsRepository)?
+    private let accountProbeFactory: (@Sendable (ProviderAccountConfig) -> any UsageProbe)?
+
+    /// Configured accounts, or nil when multi-account is off/unconfigured.
+    private var configuredAccounts: [ProviderAccountConfig]? {
+        guard let accountRepository else { return nil }
+        let accounts = accountRepository.accounts(forProvider: id)
+        return accounts.isEmpty ? nil : accounts
+    }
+
     /// Returns the active probe based on current mode
     private var activeProbe: any UsageProbe {
         switch probeMode {
@@ -79,10 +91,17 @@ public final class CodexProvider: AIProvider {
     /// - Parameters:
     ///   - probe: The RPC probe to use for fetching usage data
     ///   - settingsRepository: The repository for persisting settings
-    public init(probe: any UsageProbe, settingsRepository: any ProviderSettingsRepository) {
+    public init(
+        probe: any UsageProbe,
+        settingsRepository: any ProviderSettingsRepository,
+        accountRepository: (any MultiAccountSettingsRepository)? = nil,
+        accountProbeFactory: (@Sendable (ProviderAccountConfig) -> any UsageProbe)? = nil
+    ) {
         self.rpcProbe = probe
         self.apiProbe = nil
         self.settingsRepository = settingsRepository
+        self.accountRepository = accountRepository
+        self.accountProbeFactory = accountProbeFactory
         self.isEnabled = settingsRepository.isEnabled(forProvider: "codex")
     }
 
@@ -94,11 +113,15 @@ public final class CodexProvider: AIProvider {
     public init(
         rpcProbe: any UsageProbe,
         apiProbe: any UsageProbe,
-        settingsRepository: any CodexSettingsRepository
+        settingsRepository: any CodexSettingsRepository,
+        accountRepository: (any MultiAccountSettingsRepository)? = nil,
+        accountProbeFactory: (@Sendable (ProviderAccountConfig) -> any UsageProbe)? = nil
     ) {
         self.rpcProbe = rpcProbe
         self.apiProbe = apiProbe
         self.settingsRepository = settingsRepository
+        self.accountRepository = accountRepository
+        self.accountProbeFactory = accountProbeFactory
         self.isEnabled = settingsRepository.isEnabled(forProvider: "codex")
     }
 
@@ -114,7 +137,16 @@ public final class CodexProvider: AIProvider {
         defer { isSyncing = false }
 
         do {
-            let newSnapshot = try await activeProbe.probe()
+            let newSnapshot: UsageSnapshot
+            if let accounts = configuredAccounts, let factory = accountProbeFactory {
+                newSnapshot = try await AccountProbeAggregation.refresh(
+                    providerId: id,
+                    accounts: accounts,
+                    makeProbe: factory
+                )
+            } else {
+                newSnapshot = try await activeProbe.probe()
+            }
             snapshot = newSnapshot
             lastError = nil
             return newSnapshot

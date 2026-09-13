@@ -34,6 +34,13 @@ public protocol MultiAccountSettingsRepository: ProviderSettingsRepository {
 
     /// Sets the active account ID for a provider.
     func setActiveAccountId(_ accountId: String?, forProvider id: String)
+
+    /// Reads a secret (e.g. an API key) stored for a single account from the
+    /// secure credential store. Secrets never land in `settings.json`.
+    func accountSecret(forProvider id: String, accountId: String, name: String) -> String?
+
+    /// Stores (or clears, when nil/empty) a secret for a single account.
+    func setAccountSecret(_ value: String?, forProvider id: String, accountId: String, name: String)
 }
 
 /// Configuration for a single account within a provider.

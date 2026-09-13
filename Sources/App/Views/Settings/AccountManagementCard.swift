@@ -4,11 +4,10 @@ import Infrastructure
 
 /// Settings card for managing the accounts configured on a provider.
 ///
-/// Offline account management: add, remove, and pick the active account.
-/// Definitions persist under `providers.{providerId}.accounts` in
-/// settings.json through `MultiAccountSettingsRepository`. Probing each
-/// account with its own credentials is a separate follow-up — this card
-/// only records which accounts exist.
+/// Each account is real: DeepSeek accounts hold their own API key, and
+/// Claude/Codex accounts point at their own CLI config directory
+/// (`CLAUDE_CONFIG_DIR` / `CODEX_HOME`). All configured accounts are probed
+/// and shown at once — there is no single "active" account.
 struct AccountManagementCard: View {
     let providerId: String
     let providerName: String
@@ -18,12 +17,6 @@ struct AccountManagementCard: View {
     @State private var isExpanded = false
     @State private var showAddSheet = false
     @State private var accounts: [ProviderAccountConfig] = []
-    @State private var activeAccountId: String?
-
-    /// The repository treats a nil active pointer as "first account".
-    private var effectiveActiveId: String? {
-        activeAccountId ?? accounts.first?.accountId
-    }
 
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
@@ -63,6 +56,7 @@ struct AccountManagementCard: View {
         .onAppear(perform: reload)
         .sheet(isPresented: $showAddSheet) {
             AddAccountSheet(
+                providerId: providerId,
                 providerName: providerName,
                 existingAccountIds: accounts.map(\.accountId),
                 onAdd: addAccount,
@@ -90,7 +84,7 @@ struct AccountManagementCard: View {
                     .font(.system(size: 14, weight: .bold, design: theme.fontDesign))
                     .foregroundStyle(theme.textPrimary)
 
-                Text("\(accounts.count) account\(accounts.count == 1 ? "" : "s") configured")
+                Text("\(accounts.count) account\(accounts.count == 1 ? "" : "s") · all monitored together")
                     .font(.system(size: 10, weight: .medium, design: theme.fontDesign))
                     .foregroundStyle(theme.textTertiary)
             }
@@ -102,7 +96,7 @@ struct AccountManagementCard: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        Text("No extra accounts. Add one to track a second \(providerName) login.")
+        Text("No extra accounts. Add one to track another \(providerName) login alongside the default.")
             .font(.system(size: 10, weight: .medium, design: theme.fontDesign))
             .foregroundStyle(theme.textTertiary)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -112,21 +106,17 @@ struct AccountManagementCard: View {
     // MARK: - Account Row
 
     private func accountRow(_ account: ProviderAccountConfig) -> some View {
-        let isActive = account.accountId == effectiveActiveId
-
-        return HStack(spacing: 10) {
-            // Avatar
+        HStack(spacing: 10) {
             ZStack {
                 Circle()
-                    .fill(isActive ? theme.accentPrimary : theme.glassBackground)
+                    .fill(theme.glassBackground)
                     .frame(width: 24, height: 24)
 
                 Text(initialLetter(for: account))
                     .font(.system(size: 10, weight: .bold, design: theme.fontDesign))
-                    .foregroundStyle(isActive ? .white : theme.textSecondary)
+                    .foregroundStyle(theme.textSecondary)
             }
 
-            // Account info
             VStack(alignment: .leading, spacing: 2) {
                 Text(account.label)
                     .font(.system(size: 12, weight: .medium, design: theme.fontDesign))
@@ -152,28 +142,6 @@ struct AccountManagementCard: View {
             }
             .buttonStyle(.plain)
             .help("Remove account")
-
-            // Active indicator / switch
-            if isActive {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 14))
-                    .foregroundStyle(theme.statusHealthy)
-            } else {
-                Button {
-                    setActive(account)
-                } label: {
-                    Text("Use")
-                        .font(.system(size: 9, weight: .medium, design: theme.fontDesign))
-                        .foregroundStyle(theme.accentPrimary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(
-                            Capsule()
-                                .stroke(theme.accentPrimary.opacity(0.5), lineWidth: 1)
-                        )
-                }
-                .buttonStyle(.plain)
-            }
         }
         .padding(.vertical, 4)
     }
@@ -206,14 +174,17 @@ struct AccountManagementCard: View {
 
     private func reload() {
         accounts = settings.multiAccount.accounts(forProvider: providerId)
-        activeAccountId = settings.multiAccount.activeAccountId(forProvider: providerId)
     }
 
-    private func addAccount(_ config: ProviderAccountConfig) {
+    private func addAccount(_ config: ProviderAccountConfig, secret: String?) {
         settings.multiAccount.addAccount(config, forProvider: providerId)
-        // First account added becomes the active one so the switch has a target.
-        if activeAccountId == nil {
-            settings.multiAccount.setActiveAccountId(config.accountId, forProvider: providerId)
+        if let secret {
+            settings.multiAccount.setAccountSecret(
+                secret,
+                forProvider: providerId,
+                accountId: config.accountId,
+                name: "apiKey"
+            )
         }
         showAddSheet = false
         reload()
@@ -224,11 +195,6 @@ struct AccountManagementCard: View {
         reload()
     }
 
-    private func setActive(_ account: ProviderAccountConfig) {
-        settings.multiAccount.setActiveAccountId(account.accountId, forProvider: providerId)
-        reload()
-    }
-
     private func initialLetter(for account: ProviderAccountConfig) -> String {
         String((account.label.isEmpty ? account.accountId : account.label).prefix(1)).uppercased()
     }
@@ -236,6 +202,7 @@ struct AccountManagementCard: View {
     private func subtitle(for account: ProviderAccountConfig) -> String? {
         var parts: [String] = []
         if let email = account.email, !email.isEmpty { parts.append(email) }
+        if let dir = account.probeConfig["configDir"], !dir.isEmpty { parts.append(dir) }
         if let organization = account.organization, !organization.isEmpty { parts.append(organization) }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
@@ -244,18 +211,31 @@ struct AccountManagementCard: View {
 // MARK: - Add Account Sheet
 
 private struct AddAccountSheet: View {
+    let providerId: String
     let providerName: String
     let existingAccountIds: [String]
-    let onAdd: (ProviderAccountConfig) -> Void
+    let onAdd: (ProviderAccountConfig, String?) -> Void
     let onCancel: () -> Void
 
     @Environment(\.appTheme) private var theme
     @State private var label = ""
     @State private var email = ""
     @State private var organization = ""
+    @State private var apiKey = ""
+    @State private var configDir = ""
 
     private var trimmedLabel: String {
         label.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var needsAPIKey: Bool { providerId == "deepseek" }
+    private var needsConfigDir: Bool { providerId == "claude" || providerId == "codex" }
+
+    private var canSubmit: Bool {
+        guard !trimmedLabel.isEmpty else { return false }
+        if needsAPIKey { return !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        if needsConfigDir { return !configDir.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        return true
     }
 
     var body: some View {
@@ -265,7 +245,7 @@ private struct AddAccountSheet: View {
                     .font(.system(size: 15, weight: .bold, design: theme.fontDesign))
                     .foregroundStyle(theme.textPrimary)
 
-                Text("Name it so you can tell it apart from your other logins.")
+                Text(credentialHint)
                     .font(.system(size: 10, weight: .medium, design: theme.fontDesign))
                     .foregroundStyle(theme.textTertiary)
             }
@@ -273,6 +253,18 @@ private struct AddAccountSheet: View {
             field(title: "LABEL", text: $label, prompt: "Personal")
             field(title: "EMAIL (OPTIONAL)", text: $email, prompt: "you@example.com")
             field(title: "ORGANIZATION (OPTIONAL)", text: $organization, prompt: "Acme Corp")
+
+            if needsAPIKey {
+                secureField(title: "API KEY", text: $apiKey, prompt: "sk-...")
+            }
+
+            if needsConfigDir {
+                field(
+                    title: "CONFIG DIRECTORY",
+                    text: $configDir,
+                    prompt: providerId == "claude" ? "~/.claude-work" : "~/.codex-work"
+                )
+            }
 
             HStack(spacing: 8) {
                 Spacer()
@@ -298,20 +290,28 @@ private struct AddAccountSheet: View {
                         )
                 }
                 .buttonStyle(.plain)
-                .disabled(trimmedLabel.isEmpty)
-                .opacity(trimmedLabel.isEmpty ? 0.5 : 1)
+                .disabled(!canSubmit)
+                .opacity(canSubmit ? 1 : 0.5)
             }
         }
         .padding(20)
-        .frame(width: 360)
+        .frame(width: 380)
+    }
+
+    private var credentialHint: String {
+        switch providerId {
+        case "deepseek":
+            "Each account uses its own DeepSeek API key."
+        case "claude", "codex":
+            "Point at a separate config directory you have logged into (run the CLI with CLAUDE_CONFIG_DIR/CODEX_HOME set)."
+        default:
+            "Name it so you can tell it apart from your other logins."
+        }
     }
 
     private func field(title: String, text: Binding<String>, prompt: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.system(size: 9, weight: .semibold, design: theme.fontDesign))
-                .foregroundStyle(theme.textSecondary)
-                .tracking(0.5)
+            fieldLabel(title)
 
             TextField("", text: text, prompt: Text(prompt).foregroundStyle(theme.textTertiary))
                 .textFieldStyle(.plain)
@@ -319,26 +319,61 @@ private struct AddAccountSheet: View {
                 .foregroundStyle(theme.textPrimary)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(theme.glassBackground)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(theme.glassBorder, lineWidth: 1)
-                        )
-                )
+                .background(fieldBackground)
         }
     }
 
+    private func secureField(title: String, text: Binding<String>, prompt: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            fieldLabel(title)
+
+            SecureField("", text: text, prompt: Text(prompt).foregroundStyle(theme.textTertiary))
+                .textFieldStyle(.plain)
+                .font(.system(size: 12, weight: .medium, design: theme.fontDesign))
+                .foregroundStyle(theme.textPrimary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(fieldBackground)
+        }
+    }
+
+    private func fieldLabel(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 9, weight: .semibold, design: theme.fontDesign))
+            .foregroundStyle(theme.textSecondary)
+            .tracking(0.5)
+    }
+
+    private var fieldBackground: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .fill(theme.glassBackground)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(theme.glassBorder, lineWidth: 1)
+            )
+    }
+
     private func submit() {
-        guard !trimmedLabel.isEmpty else { return }
+        guard canSubmit else { return }
+
+        var probeConfig: [String: String] = [:]
+        if needsConfigDir {
+            probeConfig["configDir"] = configDir.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
         let config = ProviderAccountConfig(
             accountId: Self.uniqueAccountId(from: trimmedLabel, existing: existingAccountIds),
             label: trimmedLabel,
             email: email.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
-            organization: organization.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+            organization: organization.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+            probeConfig: probeConfig
         )
-        onAdd(config)
+
+        let secret = needsAPIKey
+            ? apiKey.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+            : nil
+
+        onAdd(config, secret)
     }
 
     /// Derives a stable, readable account id from the label ("Work - Acme" →

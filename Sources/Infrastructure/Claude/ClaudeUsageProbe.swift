@@ -34,12 +34,14 @@ public final class ClaudeUsageProbe: UsageProbe, @unchecked Sendable {
         claudeBinary: String = "claude",
         timeout: TimeInterval = 20.0,
         cliExecutor: CLIExecutor? = nil,
+        environment: [String: String] = [:],
         accountInfoResolver: any AccountInfoResolving = ClaudeAccountInfoResolver()
     ) {
         self.claudeBinary = claudeBinary
         self.timeout = timeout
         self.cliExecutor = cliExecutor ?? DefaultCLIExecutor(
             environmentExclusions: Self.envExclusions,
+            environment: environment,
             completionRule: .claudeUsage
         )
         self.terminalRenderer = TerminalRenderer(cols: 160, rows: 50)

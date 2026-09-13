@@ -62,6 +62,15 @@ struct ClaudeBarApp: App {
     @State private var sparkleUpdater = SparkleUpdater()
     #endif
 
+    /// Expands `~` and trims a user-entered account config path. Returns nil
+    /// when the path is empty, letting the probe fall back to the global login.
+    private static func expandAccountPath(_ raw: String?) -> String? {
+        guard let raw else { return nil }
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        return (trimmed as NSString).expandingTildeInPath
+    }
+
     init() {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
@@ -83,12 +92,26 @@ struct ClaudeBarApp: App {
                 apiProbe: ClaudeAPIUsageProbe(),
                 passProbe: ClaudePassProbe(),
                 settingsRepository: settingsRepository,
-                dailyUsageAnalyzer: ClaudeDailyUsageAnalyzer()
+                dailyUsageAnalyzer: ClaudeDailyUsageAnalyzer(),
+                accountRepository: settingsRepository,
+                accountProbeFactory: { account in
+                    let dir = Self.expandAccountPath(account.probeConfig["configDir"])
+                    let configURL = dir.map { URL(fileURLWithPath: $0).appendingPathComponent(".claude.json") }
+                    return ClaudeUsageProbe(
+                        environment: dir.map { ["CLAUDE_CONFIG_DIR": $0] } ?? [:],
+                        accountInfoResolver: ClaudeAccountInfoResolver(configURL: configURL)
+                    )
+                }
             ),
             CodexProvider(
                 rpcProbe: CodexUsageProbe(),
                 apiProbe: CodexAPIUsageProbe(),
-                settingsRepository: settingsRepository
+                settingsRepository: settingsRepository,
+                accountRepository: settingsRepository,
+                accountProbeFactory: { account in
+                    let dir = Self.expandAccountPath(account.probeConfig["configDir"])
+                    return CodexUsageProbe(environment: dir.map { ["CODEX_HOME": $0] } ?? [:])
+                }
             ),
             GeminiProvider(probe: GeminiUsageProbe(), settingsRepository: settingsRepository),
             AntigravityProvider(probe: AntigravityUsageProbe(), settingsRepository: settingsRepository),
@@ -119,7 +142,16 @@ struct ClaudeBarApp: App {
             ),
             DeepSeekProvider(
                 probe: DeepSeekUsageProbe(settingsRepository: settingsRepository),
-                settingsRepository: settingsRepository
+                settingsRepository: settingsRepository,
+                accountRepository: settingsRepository,
+                accountProbeFactory: { account in
+                    let key = settingsRepository.accountSecret(
+                        forProvider: "deepseek",
+                        accountId: account.accountId,
+                        name: "apiKey"
+                    )
+                    return DeepSeekUsageProbe(settingsRepository: settingsRepository, apiKey: key)
+                }
             ),
             VercelProvider(
                 probe: VercelUsageProbe(settingsRepository: settingsRepository),

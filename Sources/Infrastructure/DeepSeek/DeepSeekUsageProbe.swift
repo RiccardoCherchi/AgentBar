@@ -9,6 +9,9 @@ public struct DeepSeekUsageProbe: UsageProbe {
     private let networkClient: any NetworkClient
     private let settingsRepository: any DeepSeekSettingsRepository
     private let timeout: TimeInterval
+    /// Per-account API key. When set it wins over env var and stored key, so a
+    /// multi-account provider can build one probe per account.
+    private let apiKeyOverride: String?
     /// Reads an environment variable by name. Injected so tests are
     /// deterministic regardless of the host environment.
     private let environmentValue: @Sendable (String) -> String?
@@ -20,17 +23,24 @@ public struct DeepSeekUsageProbe: UsageProbe {
         networkClient: any NetworkClient = URLSession.shared,
         settingsRepository: any DeepSeekSettingsRepository,
         timeout: TimeInterval = 30,
+        apiKey: String? = nil,
         environmentValue: @escaping @Sendable (String) -> String? = { ProcessInfo.processInfo.environment[$0] }
     ) {
         self.networkClient = networkClient
         self.settingsRepository = settingsRepository
         self.timeout = timeout
+        self.apiKeyOverride = apiKey
         self.environmentValue = environmentValue
     }
 
     // MARK: - Token Resolution
 
     func getApiKey() -> String? {
+        // A per-account key always wins.
+        if let apiKeyOverride, !apiKeyOverride.isEmpty {
+            return apiKeyOverride
+        }
+
         // First, check environment variable if configured
         let envVarName = settingsRepository.deepseekAuthEnvVar()
         let effectiveEnvVar = envVarName.isEmpty ? "DEEPSEEK_API_KEY" : envVarName
