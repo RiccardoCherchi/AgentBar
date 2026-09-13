@@ -99,6 +99,11 @@ struct DeepSeekConfigCard: View {
 
     private var deepSeekConfigForm: some View {
         VStack(alignment: .leading, spacing: 14) {
+            // Clarify the global-vs-accounts model, since both surfaces coexist.
+            Text("This is the default login. Once you add accounts under Accounts, each account uses its own API key and budget, and these defaults are ignored.")
+                .font(.system(size: 9, weight: .medium, design: theme.fontDesign))
+                .foregroundStyle(theme.textTertiary)
+
             // API Key input
             VStack(alignment: .leading, spacing: 6) {
                 HStack {

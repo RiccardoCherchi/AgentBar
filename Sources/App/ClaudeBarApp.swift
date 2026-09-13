@@ -150,7 +150,10 @@ struct ClaudeBarApp: App {
                         accountId: account.accountId,
                         name: "apiKey"
                     )
-                    return DeepSeekUsageProbe(settingsRepository: settingsRepository, apiKey: key)
+                    let budget = account.probeConfig["balanceBudget"].flatMap {
+                        Decimal(string: $0, locale: Locale(identifier: "en_US_POSIX"))
+                    }
+                    return DeepSeekUsageProbe(settingsRepository: settingsRepository, apiKey: key, budget: budget)
                 }
             ),
             VercelProvider(

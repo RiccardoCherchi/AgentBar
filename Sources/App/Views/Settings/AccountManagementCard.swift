@@ -70,10 +70,10 @@ struct AccountManagementCard: View {
             set: { if !$0 { keyAccount = nil } }
         )) {
             if let account = keyAccount {
-                SetAccountKeySheet(
+                SetAccountSheet(
                     providerName: providerName,
-                    accountLabel: account.label,
-                    onSave: { key in setKey(key, for: account) },
+                    account: account,
+                    onSave: { key, budget in setAccountSettings(key: key, budget: budget, for: account) },
                     onCancel: { keyAccount = nil }
                 )
             }
@@ -215,13 +215,35 @@ struct AccountManagementCard: View {
         )
     }
 
-    private func setKey(_ key: String, for account: ProviderAccountConfig) {
-        settings.multiAccount.setAccountSecret(
-            key.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
-            forProvider: providerId,
-            accountId: account.accountId,
-            name: "apiKey"
+    private func setAccountSettings(key: String, budget: String, for account: ProviderAccountConfig) {
+        let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedKey.isEmpty {
+            settings.multiAccount.setAccountSecret(
+                trimmedKey,
+                forProvider: providerId,
+                accountId: account.accountId,
+                name: "apiKey"
+            )
+        }
+
+        var probeConfig = account.probeConfig
+        let trimmedBudget = budget.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedBudget.isEmpty {
+            probeConfig.removeValue(forKey: "balanceBudget")
+        } else {
+            probeConfig["balanceBudget"] = trimmedBudget
+        }
+        settings.multiAccount.updateAccount(
+            ProviderAccountConfig(
+                accountId: account.accountId,
+                label: account.label,
+                email: account.email,
+                organization: account.organization,
+                probeConfig: probeConfig
+            ),
+            forProvider: providerId
         )
+
         keyAccount = nil
         reload()
     }
@@ -253,6 +275,9 @@ struct AccountManagementCard: View {
         var parts: [String] = []
         if providerId == "deepseek" {
             parts.append(accountsWithKeys.contains(account.accountId) ? "Key set" : "No key")
+            if let budget = account.probeConfig["balanceBudget"], !budget.isEmpty {
+                parts.append("Budget $\(budget)")
+            }
         }
         if let email = account.email, !email.isEmpty { parts.append(email) }
         if let dir = account.probeConfig["configDir"], !dir.isEmpty { parts.append(dir) }
@@ -275,6 +300,7 @@ private struct AddAccountSheet: View {
     @State private var email = ""
     @State private var organization = ""
     @State private var apiKey = ""
+    @State private var budget = ""
     @State private var configDir = ""
 
     private var trimmedLabel: String {
@@ -309,6 +335,7 @@ private struct AddAccountSheet: View {
 
             if needsAPIKey {
                 secureField(title: "API KEY", text: $apiKey, prompt: "sk-...")
+                field(title: "BALANCE BUDGET (OPTIONAL)", text: $budget, prompt: "20.00")
             }
 
             if needsConfigDir {
@@ -413,6 +440,12 @@ private struct AddAccountSheet: View {
         if needsConfigDir {
             probeConfig["configDir"] = configDir.trimmingCharacters(in: .whitespacesAndNewlines)
         }
+        if needsAPIKey {
+            let trimmedBudget = budget.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmedBudget.isEmpty {
+                probeConfig["balanceBudget"] = trimmedBudget
+            }
+        }
 
         let config = ProviderAccountConfig(
             accountId: Self.uniqueAccountId(from: trimmedLabel, existing: existingAccountIds),
@@ -461,30 +494,40 @@ private struct AddAccountSheet: View {
     }
 }
 
-// MARK: - Set Account Key Sheet
+// MARK: - Set Account Sheet
 
-/// Sets or replaces the API key stored for a single DeepSeek account.
-private struct SetAccountKeySheet: View {
+/// Sets the API key and optional balance budget for a single DeepSeek account.
+private struct SetAccountSheet: View {
     let providerName: String
-    let accountLabel: String
-    let onSave: (String) -> Void
+    let account: ProviderAccountConfig
+    let onSave: (String, String) -> Void
     let onCancel: () -> Void
 
     @Environment(\.appTheme) private var theme
     @State private var apiKey = ""
+    @State private var budget: String
 
-    private var trimmedKey: String {
-        apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+    init(
+        providerName: String,
+        account: ProviderAccountConfig,
+        onSave: @escaping (String, String) -> Void,
+        onCancel: @escaping () -> Void
+    ) {
+        self.providerName = providerName
+        self.account = account
+        self.onSave = onSave
+        self.onCancel = onCancel
+        _budget = State(initialValue: account.probeConfig["balanceBudget"] ?? "")
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("API Key for \(accountLabel)")
+                Text("Settings for \(account.label)")
                     .font(.system(size: 15, weight: .bold, design: theme.fontDesign))
                     .foregroundStyle(theme.textPrimary)
 
-                Text("Stored in the Keychain and used only for this \(providerName) account.")
+                Text("The API key is stored in the Keychain; the budget applies only to this \(providerName) account.")
                     .font(.system(size: 10, weight: .medium, design: theme.fontDesign))
                     .foregroundStyle(theme.textTertiary)
             }
@@ -495,20 +538,28 @@ private struct SetAccountKeySheet: View {
                     .foregroundStyle(theme.textSecondary)
                     .tracking(0.5)
 
-                SecureField("", text: $apiKey, prompt: Text("sk-...").foregroundStyle(theme.textTertiary))
+                SecureField("", text: $apiKey, prompt: Text("Leave blank to keep the current key").foregroundStyle(theme.textTertiary))
                     .textFieldStyle(.plain)
                     .font(.system(size: 12, weight: .medium, design: theme.fontDesign))
                     .foregroundStyle(theme.textPrimary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(theme.glassBackground)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(theme.glassBorder, lineWidth: 1)
-                            )
-                    )
+                    .background(fieldBackground)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("BALANCE BUDGET (OPTIONAL)")
+                    .font(.system(size: 9, weight: .semibold, design: theme.fontDesign))
+                    .foregroundStyle(theme.textSecondary)
+                    .tracking(0.5)
+
+                TextField("", text: $budget, prompt: Text("20.00").foregroundStyle(theme.textTertiary))
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 12, weight: .medium, design: theme.fontDesign))
+                    .foregroundStyle(theme.textPrimary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(fieldBackground)
             }
 
             HStack(spacing: 8) {
@@ -524,9 +575,9 @@ private struct SetAccountKeySheet: View {
                 .buttonStyle(.plain)
 
                 Button {
-                    onSave(trimmedKey)
+                    onSave(apiKey, budget)
                 } label: {
-                    Text("Save Key")
+                    Text("Save")
                         .font(.system(size: 11, weight: .semibold, design: theme.fontDesign))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 12)
@@ -537,12 +588,19 @@ private struct SetAccountKeySheet: View {
                         )
                 }
                 .buttonStyle(.plain)
-                .disabled(trimmedKey.isEmpty)
-                .opacity(trimmedKey.isEmpty ? 0.5 : 1)
             }
         }
         .padding(20)
         .frame(width: 380)
+    }
+
+    private var fieldBackground: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .fill(theme.glassBackground)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(theme.glassBorder, lineWidth: 1)
+            )
     }
 }
 

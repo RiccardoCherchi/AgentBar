@@ -99,8 +99,36 @@ struct DeepSeekUsageProbeTests {
     }
 
     @Test
-    func `probe sends Bearer and Accept headers to the balance endpoint`() async throws {
-        // Given
+    func `probe uses a per-account budget override`() async throws {
+        // Given a $40 balance and a $50 per-account budget, with no global budget
+        let mockNetwork = MockNetworkClient()
+        let responseData = Data(Self.sampleApiResponse.utf8)
+        let httpResponse = makeHTTPResponse(statusCode: 200)
+        given(mockNetwork)
+            .request(.any)
+            .willReturn((responseData, httpResponse))
+
+        let defaults = UserDefaults(suiteName: "DeepSeekProbeBudgetTests.\(UUID().uuidString)")!
+        let settingsRepository = UserDefaultsProviderSettingsRepository(userDefaults: defaults)
+
+        let probe = DeepSeekUsageProbe(
+            networkClient: mockNetwork,
+            settingsRepository: settingsRepository,
+            apiKey: "test-key",
+            budget: Decimal(50),
+            environmentValue: { _ in nil }
+        )
+
+        // When
+        let snapshot = try await probe.probe()
+
+        // Then
+        #expect(snapshot.quotas[0].percentRemaining == 80)
+        #expect(snapshot.quotas[0].percentRemainingIsMeaningful)
+    }
+
+    @Test
+    func `probe sends Bearer and Accept headers to the balance endpoint`() async throws {        // Given
         let mockNetwork = MockNetworkClient()
         let responseData = Data(Self.sampleApiResponse.utf8)
         let httpResponse = makeHTTPResponse(statusCode: 200)

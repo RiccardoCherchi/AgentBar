@@ -12,6 +12,9 @@ public struct DeepSeekUsageProbe: UsageProbe {
     /// Per-account API key. When set it wins over env var and stored key, so a
     /// multi-account provider can build one probe per account.
     private let apiKeyOverride: String?
+    /// Per-account balance budget. When set it wins over the global budget, so
+    /// each account can be measured against its own budget.
+    private let budgetOverride: Decimal?
     /// Reads an environment variable by name. Injected so tests are
     /// deterministic regardless of the host environment.
     private let environmentValue: @Sendable (String) -> String?
@@ -24,12 +27,14 @@ public struct DeepSeekUsageProbe: UsageProbe {
         settingsRepository: any DeepSeekSettingsRepository,
         timeout: TimeInterval = 30,
         apiKey: String? = nil,
+        budget: Decimal? = nil,
         environmentValue: @escaping @Sendable (String) -> String? = { ProcessInfo.processInfo.environment[$0] }
     ) {
         self.networkClient = networkClient
         self.settingsRepository = settingsRepository
         self.timeout = timeout
         self.apiKeyOverride = apiKey
+        self.budgetOverride = budget
         self.environmentValue = environmentValue
     }
 
@@ -104,7 +109,7 @@ public struct DeepSeekUsageProbe: UsageProbe {
         let snapshot = try Self.parseResponse(
             data,
             providerId: "deepseek",
-            budget: settingsRepository.deepseekBalanceBudget()
+            budget: budgetOverride ?? settingsRepository.deepseekBalanceBudget()
         )
 
         AppLog.probes.info("DeepSeek probe success: \(snapshot.quotas.count) quotas found")

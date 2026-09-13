@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.3] - 2026-09-13
+
+### Changed
+- DeepSeek balance budgets are now per account, not global. Each account's settings let you set its own API key and budget, and the account row shows both. The global API key/budget on the DeepSeek config card are the default login, used only when no accounts are configured.
+
+---
+
 ## [0.6.2] - 2026-09-13
 
 ### Changed
@@ -1098,7 +1105,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Menu bar interface with quota display
 - Automatic refresh every 5 minutes
 
-[Unreleased]: https://github.com/tddworks/ClaudeBar/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/tddworks/ClaudeBar/compare/v0.6.3...HEAD
+[0.6.3]: https://github.com/tddworks/ClaudeBar/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/tddworks/ClaudeBar/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/tddworks/ClaudeBar/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/tddworks/ClaudeBar/compare/v0.5.1...v0.6.0
