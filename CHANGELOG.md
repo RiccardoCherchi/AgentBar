@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.1] - 2026-09-13
+
+### Added
+- A DeepSeek account's API key can now be set or replaced straight from the Accounts card: each row has a key button and shows whether a key is stored, so accounts created earlier no longer need to be deleted and re-added to give them their own key.
+
+---
+
 ## [0.6.0] - 2026-09-13
 
 ### Added
@@ -1084,7 +1091,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Menu bar interface with quota display
 - Automatic refresh every 5 minutes
 
-[Unreleased]: https://github.com/tddworks/ClaudeBar/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/tddworks/ClaudeBar/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/tddworks/ClaudeBar/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/tddworks/ClaudeBar/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/tddworks/ClaudeBar/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/tddworks/ClaudeBar/compare/v0.4.92...v0.5.0

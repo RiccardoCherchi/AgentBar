@@ -17,6 +17,8 @@ struct AccountManagementCard: View {
     @State private var isExpanded = false
     @State private var showAddSheet = false
     @State private var accounts: [ProviderAccountConfig] = []
+    @State private var accountsWithKeys: Set<String> = []
+    @State private var keyAccount: ProviderAccountConfig?
 
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
@@ -62,6 +64,19 @@ struct AccountManagementCard: View {
                 onAdd: addAccount,
                 onCancel: { showAddSheet = false }
             )
+        }
+        .sheet(isPresented: Binding(
+            get: { keyAccount != nil },
+            set: { if !$0 { keyAccount = nil } }
+        )) {
+            if let account = keyAccount {
+                SetAccountKeySheet(
+                    providerName: providerName,
+                    accountLabel: account.label,
+                    onSave: { key in setKey(key, for: account) },
+                    onCancel: { keyAccount = nil }
+                )
+            }
         }
     }
 
@@ -133,6 +148,19 @@ struct AccountManagementCard: View {
 
             Spacer()
 
+            if providerId == "deepseek" {
+                let hasKey = accountsWithKeys.contains(account.accountId)
+                Button {
+                    keyAccount = account
+                } label: {
+                    Image(systemName: hasKey ? "key.fill" : "key")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(hasKey ? theme.statusHealthy : theme.accentPrimary)
+                }
+                .buttonStyle(.plain)
+                .help(hasKey ? "Replace API key" : "Set API key")
+            }
+
             Button(role: .destructive) {
                 removeAccount(account)
             } label: {
@@ -174,6 +202,28 @@ struct AccountManagementCard: View {
 
     private func reload() {
         accounts = settings.multiAccount.accounts(forProvider: providerId)
+        accountsWithKeys = Set(
+            accounts
+                .filter {
+                    settings.multiAccount.accountSecret(
+                        forProvider: providerId,
+                        accountId: $0.accountId,
+                        name: "apiKey"
+                    ) != nil
+                }
+                .map(\.accountId)
+        )
+    }
+
+    private func setKey(_ key: String, for account: ProviderAccountConfig) {
+        settings.multiAccount.setAccountSecret(
+            key.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+            forProvider: providerId,
+            accountId: account.accountId,
+            name: "apiKey"
+        )
+        keyAccount = nil
+        reload()
     }
 
     private func addAccount(_ config: ProviderAccountConfig, secret: String?) {
@@ -201,6 +251,9 @@ struct AccountManagementCard: View {
 
     private func subtitle(for account: ProviderAccountConfig) -> String? {
         var parts: [String] = []
+        if providerId == "deepseek" {
+            parts.append(accountsWithKeys.contains(account.accountId) ? "Key set" : "No key")
+        }
         if let email = account.email, !email.isEmpty { parts.append(email) }
         if let dir = account.probeConfig["configDir"], !dir.isEmpty { parts.append(dir) }
         if let organization = account.organization, !organization.isEmpty { parts.append(organization) }
@@ -405,6 +458,91 @@ private struct AddAccountSheet: View {
             result.removeLast()
         }
         return result.isEmpty ? "account" : result
+    }
+}
+
+// MARK: - Set Account Key Sheet
+
+/// Sets or replaces the API key stored for a single DeepSeek account.
+private struct SetAccountKeySheet: View {
+    let providerName: String
+    let accountLabel: String
+    let onSave: (String) -> Void
+    let onCancel: () -> Void
+
+    @Environment(\.appTheme) private var theme
+    @State private var apiKey = ""
+
+    private var trimmedKey: String {
+        apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("API Key for \(accountLabel)")
+                    .font(.system(size: 15, weight: .bold, design: theme.fontDesign))
+                    .foregroundStyle(theme.textPrimary)
+
+                Text("Stored in the Keychain and used only for this \(providerName) account.")
+                    .font(.system(size: 10, weight: .medium, design: theme.fontDesign))
+                    .foregroundStyle(theme.textTertiary)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("API KEY")
+                    .font(.system(size: 9, weight: .semibold, design: theme.fontDesign))
+                    .foregroundStyle(theme.textSecondary)
+                    .tracking(0.5)
+
+                SecureField("", text: $apiKey, prompt: Text("sk-...").foregroundStyle(theme.textTertiary))
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 12, weight: .medium, design: theme.fontDesign))
+                    .foregroundStyle(theme.textPrimary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(theme.glassBackground)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(theme.glassBorder, lineWidth: 1)
+                            )
+                    )
+            }
+
+            HStack(spacing: 8) {
+                Spacer()
+
+                Button(action: onCancel) {
+                    Text("Cancel")
+                        .font(.system(size: 11, weight: .medium, design: theme.fontDesign))
+                        .foregroundStyle(theme.textSecondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    onSave(trimmedKey)
+                } label: {
+                    Text("Save Key")
+                        .font(.system(size: 11, weight: .semibold, design: theme.fontDesign))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(theme.accentPrimary)
+                        )
+                }
+                .buttonStyle(.plain)
+                .disabled(trimmedKey.isEmpty)
+                .opacity(trimmedKey.isEmpty ? 0.5 : 1)
+            }
+        }
+        .padding(20)
+        .frame(width: 380)
     }
 }
 
