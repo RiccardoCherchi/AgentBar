@@ -33,7 +33,7 @@
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
     <key>SUFeedURL</key>
-    <string>https://riccardocherchi.github.io/ClaudeBar/appcast.xml</string>
+    <string>https://riccardocherchi.github.io/AgentBar/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>puuKKKkAjqhJrY7IjPwVgRT5BCItNlDqKeUfManzAjk=</string>
     <key>SUEnableAutomaticChecks</key>
