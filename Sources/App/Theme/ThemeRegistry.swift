@@ -43,6 +43,9 @@ public final class ThemeRegistry {
         register(SystemTheme())
         register(CLITheme())
         register(ChristmasTheme())
+        for flavor in CatppuccinFlavor.allCases {
+            register(CatppuccinTheme(flavor: flavor))
+        }
     }
 
     // MARK: - Public API

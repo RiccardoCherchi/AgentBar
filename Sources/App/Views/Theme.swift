@@ -10,6 +10,10 @@ enum ThemeMode: String, CaseIterable {
     case system
     case cli
     case christmas
+    case catppuccinLatte = "catppuccin-latte"
+    case catppuccinFrappe = "catppuccin-frappe"
+    case catppuccinMacchiato = "catppuccin-macchiato"
+    case catppuccinMocha = "catppuccin-mocha"
 
     var displayName: String {
         switch self {
@@ -18,6 +22,10 @@ enum ThemeMode: String, CaseIterable {
         case .system: "System"
         case .cli: "CLI"
         case .christmas: "Christmas"
+        case .catppuccinLatte: "Latte"
+        case .catppuccinFrappe: "Frappé"
+        case .catppuccinMacchiato: "Macchiato"
+        case .catppuccinMocha: "Mocha"
         }
     }
 
@@ -28,6 +36,8 @@ enum ThemeMode: String, CaseIterable {
         case .system: "circle.lefthalf.filled"
         case .cli: "terminal.fill"
         case .christmas: "snowflake"
+        case .catppuccinLatte, .catppuccinFrappe, .catppuccinMacchiato, .catppuccinMocha:
+            "cup.and.saucer.fill"
         }
     }
 
@@ -39,6 +49,19 @@ enum ThemeMode: String, CaseIterable {
     /// Whether this theme uses CLI-specific colors
     var isCLI: Bool {
         self == .cli
+    }
+
+    /// Whether this theme is a Catppuccin flavor
+    var isCatppuccin: Bool {
+        switch self {
+        case .catppuccinLatte, .catppuccinFrappe, .catppuccinMacchiato, .catppuccinMocha: true
+        default: false
+        }
+    }
+
+    /// Whether this theme renders on a light base.
+    var prefersLightColorScheme: Bool {
+        self == .light || self == .catppuccinLatte
     }
 }
 
@@ -971,13 +994,12 @@ struct ThemeSwitcherButton: View {
     }
 
     private func cycleTheme() {
-        switch themeMode {
-        case .light: themeMode = .dark
-        case .dark: themeMode = .system
-        case .system: themeMode = .cli
-        case .cli: themeMode = .christmas
-        case .christmas: themeMode = .light
+        let modes = ThemeMode.allCases
+        guard let index = modes.firstIndex(of: themeMode) else {
+            themeMode = .light
+            return
         }
+        themeMode = modes[(index + 1) % modes.count]
     }
 }
 
@@ -989,11 +1011,10 @@ struct ThemeProvider: ViewModifier {
 
     private var effectiveColorScheme: ColorScheme {
         switch themeMode {
-        case .light: .light
-        case .dark: .dark
+        case .light, .catppuccinLatte: .light
         case .system: systemColorScheme
-        case .cli: .dark  // CLI uses dark mode base
-        case .christmas: .dark  // Christmas uses dark mode base
+        case .dark, .cli, .christmas,
+             .catppuccinFrappe, .catppuccinMacchiato, .catppuccinMocha: .dark
         }
     }
 

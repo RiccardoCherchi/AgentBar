@@ -52,8 +52,9 @@ public struct AppThemeProviderModifier: ViewModifier {
     private var effectiveColorScheme: ColorScheme {
         let mode = ThemeMode(rawValue: themeModeId)
         switch mode {
-        case .light: return .light
-        case .dark, .cli, .christmas: return .dark
+        case .light, .catppuccinLatte: return .light
+        case .dark, .cli, .christmas,
+             .catppuccinFrappe, .catppuccinMacchiato, .catppuccinMocha: return .dark
         case .system: return systemColorScheme
         case .none:
             // Imported theme — check dark preference
