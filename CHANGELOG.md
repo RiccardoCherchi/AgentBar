@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.5.0] - 2026-09-13
+
 ### Added
 - Claude, Codex and DeepSeek now have an Accounts card in their per-provider settings form, so a single provider can track more than one login. Add named accounts with an optional email and organization, remove them, and pick which one is active; definitions persist in `settings.json` under `providers.{id}.accounts` and the active account under `providers.{id}.activeAccountId` through the existing `MultiAccountSettingsRepository`. This release manages the account list only — probing each account with its own credentials is a follow-up.
 - Four built-in [Catppuccin](https://catppuccin.com/palette/) themes: Latte, Frappé, Macchiato and Mocha, each built from the official palette. Latte resolves as a light theme; the other three as dark.
@@ -1066,7 +1070,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Menu bar interface with quota display
 - Automatic refresh every 5 minutes
 
-[Unreleased]: https://github.com/tddworks/ClaudeBar/compare/v0.4.92...HEAD
+[Unreleased]: https://github.com/tddworks/ClaudeBar/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/tddworks/ClaudeBar/compare/v0.4.92...v0.5.0
 [0.4.92]: https://github.com/tddworks/ClaudeBar/compare/v0.4.91...v0.4.92
 [0.4.91]: https://github.com/tddworks/ClaudeBar/compare/v0.4.90...v0.4.91
 [0.4.90]: https://github.com/tddworks/ClaudeBar/compare/v0.4.89...v0.4.90
