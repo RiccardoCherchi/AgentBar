@@ -580,7 +580,7 @@ public final class JSONSettingsRepository:
 
         // Prove it landed, rather than assume. `CredentialRepository.save` has no
         // way to report a refusal, and the Keychain does refuse: a locally built
-        // ClaudeBar is ad-hoc signed (`CODE_SIGN_IDENTITY` is "-"), so it has no
+        // AgentBar is ad-hoc signed (`CODE_SIGN_IDENTITY` is "-"), so it has no
         // stable identity for a Keychain item's access control to name, and both
         // the read and the write come back errSecAuthFailed (-25293). A release
         // build signed with a Developer ID is unaffected. Without this check the

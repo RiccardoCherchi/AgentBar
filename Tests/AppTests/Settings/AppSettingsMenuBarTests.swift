@@ -2,7 +2,7 @@ import Testing
 import Foundation
 import Domain
 import Infrastructure
-@testable import ClaudeBar
+@testable import AgentBar
 
 @Suite @MainActor
 struct AppSettingsMenuBarTests {

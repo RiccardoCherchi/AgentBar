@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ClaudeBar Touch Bar Status Helper
+AgentBar Touch Bar Status Helper
 Reads ~/.claudebar/status.json and formats output for BetterTouchTool (BTT), MTMR, and CLI,
 with full support for real provider icons.
 
@@ -9,9 +9,9 @@ Usage:
     python3 scripts/touchbar_status.py --mtmr      # MTMR plain text with status emoji
     python3 scripts/touchbar_status.py --text      # Plain menu bar text
     python3 scripts/touchbar_status.py --json      # Raw status JSON
-    python3 scripts/touchbar_status.py --refresh   # Trigger ClaudeBar refresh
-    python3 scripts/touchbar_status.py --open      # Open ClaudeBar dropdown
-    python3 scripts/touchbar_status.py --settings  # Open ClaudeBar Settings
+    python3 scripts/touchbar_status.py --refresh   # Trigger AgentBar refresh
+    python3 scripts/touchbar_status.py --open      # Open AgentBar dropdown
+    python3 scripts/touchbar_status.py --settings  # Open AgentBar Settings
 """
 
 import sys
@@ -101,18 +101,18 @@ def format_btt(data):
     if not data:
         fallback_icon = os.path.join(ICONS_USER_DIR, "claude.png")
         payload = {
-            "text": "ClaudeBar: Offline",
+            "text": "AgentBar: Offline",
             "font_color": "200,200,200,255",
             "background_color": "40,40,40,255"
         }
         if os.path.isfile(fallback_icon):
             payload["icon_path"] = fallback_icon
         else:
-            payload["text"] = "🤖 ClaudeBar: Offline"
+            payload["text"] = "🤖 AgentBar: Offline"
         return json.dumps(payload, ensure_ascii=False)
 
     if not data.get("enabled", True):
-        # Disabled in ClaudeBar Settings: hide the widget
+        # Disabled in AgentBar Settings: hide the widget
         return json.dumps({
             "text": "",
             "background_color": "0,0,0,0",
@@ -122,7 +122,7 @@ def format_btt(data):
     status = data.get("status", "unknown").lower()
     menu_text = data.get("menuBarText", "").strip()
     provider_id = data.get("selectedProviderId", "")
-    provider_name = data.get("selectedProviderName", "ClaudeBar")
+    provider_name = data.get("selectedProviderName", "AgentBar")
     
     icon_path = get_icon_path(provider_id)
     
@@ -161,7 +161,7 @@ def format_btt(data):
 def format_mtmr(data):
     """Outputs plain text with emoji for MTMR (My TouchBar. My Rules.)."""
     if not data:
-        return "⚪ ClaudeBar: Offline"
+        return "⚪ AgentBar: Offline"
 
     if not data.get("enabled", True):
         return ""
@@ -169,7 +169,7 @@ def format_mtmr(data):
     status = data.get("status", "unknown").lower()
     menu_text = data.get("menuBarText", "").strip()
     provider_id = data.get("selectedProviderId", "")
-    provider_name = data.get("selectedProviderName", "ClaudeBar")
+    provider_name = data.get("selectedProviderName", "AgentBar")
     emoji = get_fallback_emoji(provider_id)
     status_emoji = STATUS_EMOJIS.get(status, "⚪")
 
@@ -184,8 +184,8 @@ def format_mtmr(data):
 def format_text(data):
     """Outputs plain text."""
     if not data:
-        return "ClaudeBar: Offline"
-    return data.get("menuBarText", "ClaudeBar")
+        return "AgentBar: Offline"
+    return data.get("menuBarText", "AgentBar")
 
 
 def trigger_url(scheme_url):

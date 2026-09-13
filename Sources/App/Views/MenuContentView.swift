@@ -127,7 +127,7 @@ struct MenuContentView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .background(TouchBarWindowAccessor())
         .touchBar {
-            ClaudeBarNativeTouchBar(monitor: monitor)
+            AgentBarNativeTouchBar(monitor: monitor)
         }
         .onReceive(NotificationCenter.default.publisher(for: .hookSettingsChanged)) { notification in
             let enabled = notification.userInfo?["enabled"] as? Bool ?? false
@@ -162,7 +162,7 @@ struct MenuContentView: View {
         .onChange(of: selectedProviderId) { _, newProviderId in
             // Refresh immediately when the user switches provider while the
             // dropdown is open. Periodic background refresh is owned by the
-            // app-lifetime loop in ClaudeBarApp, which restarts itself when the
+            // app-lifetime loop in AgentBarApp, which restarts itself when the
             // selected or menu-bar provider changes.
             Task {
                 await refresh(providerId: newProviderId)
@@ -254,7 +254,7 @@ struct MenuContentView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
-                    Text("ClaudeBar")
+                    Text(headerTitle)
                         .font(.system(size: 18, weight: .bold, design: theme.fontDesign))
                         .foregroundStyle(theme.textPrimary)
 
@@ -278,6 +278,14 @@ struct MenuContentView: View {
         }
         .opacity(animateIn ? 1 : 0)
         .offset(y: animateIn ? 0 : -10)
+    }
+
+    /// The popover header shows the selected assistant's name (e.g. "DeepSeek")
+    /// so the window says what it is showing; overview mode falls back to the
+    /// app name.
+    private var headerTitle: String {
+        if settings.overviewModeEnabled { return "AgentBar" }
+        return selectedProvider?.name ?? "AgentBar"
     }
 
     private var headerSubtitle: String {
@@ -898,7 +906,7 @@ struct MenuContentView: View {
                 }
             }
             .buttonStyle(.plain)
-            .help("Quit ClaudeBar")
+            .help("Quit AgentBar")
             .keyboardShortcut("q")
         }
         .opacity(animateIn ? 1 : 0)

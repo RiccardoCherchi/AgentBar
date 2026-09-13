@@ -1,10 +1,10 @@
 import Foundation
 import Domain
 
-/// Installs and uninstalls ClaudeBar hooks in ~/.claude/settings.json.
+/// Installs and uninstalls AgentBar hooks in ~/.claude/settings.json.
 /// Hook commands use the __claudebar_hook function wrapper for identification.
 public enum HookInstaller {
-    /// The marker function name used to identify ClaudeBar hooks
+    /// The marker function name used to identify AgentBar hooks
     static let hookMarker = "__claudebar_hook"
 
     /// The settings file path
@@ -44,9 +44,9 @@ public enum HookInstaller {
         for event in hookEvents {
             var matcherEntries = hooks[event] as? [[String: Any]] ?? [[String: Any]]()
 
-            // Remove any existing ClaudeBar matcher entries for this event
+            // Remove any existing AgentBar matcher entries for this event
             matcherEntries.removeAll { entry in
-                containsClaudeBarHook(in: entry)
+                containsAgentBarHook(in: entry)
             }
 
             // Add the new hook in matcher format
@@ -67,7 +67,7 @@ public enum HookInstaller {
         try writeSettings(settings)
     }
 
-    /// Uninstalls ClaudeBar hooks from the Claude settings file.
+    /// Uninstalls AgentBar hooks from the Claude settings file.
     /// Preserves hooks from other tools.
     public static func uninstall() throws {
         guard var settings = try? readOrCreateSettings() else { return }
@@ -77,7 +77,7 @@ public enum HookInstaller {
             guard var matcherEntries = hooks[event] as? [[String: Any]] else { continue }
 
             matcherEntries.removeAll { entry in
-                containsClaudeBarHook(in: entry)
+                containsAgentBarHook(in: entry)
             }
 
             if matcherEntries.isEmpty {
@@ -96,7 +96,7 @@ public enum HookInstaller {
         try writeSettings(settings)
     }
 
-    /// Detects whether ClaudeBar hooks are currently installed.
+    /// Detects whether AgentBar hooks are currently installed.
     public static func isInstalled() -> Bool {
         guard let settings = readSettings(),
               let hooks = settings["hooks"] as? [String: Any] else {
@@ -107,13 +107,13 @@ public enum HookInstaller {
         return hooks.values.contains { value in
             guard let matcherEntries = value as? [[String: Any]] else { return false }
             return matcherEntries.contains { entry in
-                containsClaudeBarHook(in: entry)
+                containsAgentBarHook(in: entry)
             }
         }
     }
 
-    /// Checks if a matcher entry contains a ClaudeBar hook command.
-    private static func containsClaudeBarHook(in matcherEntry: [String: Any]) -> Bool {
+    /// Checks if a matcher entry contains a AgentBar hook command.
+    private static func containsAgentBarHook(in matcherEntry: [String: Any]) -> Bool {
         guard let innerHooks = matcherEntry["hooks"] as? [[String: Any]] else { return false }
         return innerHooks.contains { hook in
             guard let command = hook["command"] as? String else { return false }

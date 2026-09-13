@@ -186,7 +186,53 @@ private struct MenuBarProviderCard: View {
                     .padding(.top, 12)
                 }
             }
+
+            SettingsRowDivider()
+            SettingsRow(title: "Color", subtitle: "Menu bar text color for this provider.") {
+                HStack(spacing: 10) {
+                    if config.colorHex != nil {
+                        Button("Reset") {
+                            var updated = config
+                            updated.colorHex = nil
+                            settings.setMenuBarConfiguration(updated, for: provider.id)
+                        }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 11, weight: .medium, design: theme.fontDesign))
+                        .foregroundStyle(theme.accentPrimary)
+                    }
+                    ColorPicker("", selection: colorBinding, supportsOpacity: false)
+                        .labelsHidden()
+                }
+            }
         }
+    }
+
+    /// Binds the provider's custom color. Falls back to the provider's brand
+    /// color so the picker starts somewhere sensible.
+    private var colorBinding: Binding<Color> {
+        Binding(
+            get: {
+                if let hex = config.colorHex, let color = Color(hex: hex) { return color }
+                return ProviderVisualIdentityLookup.color(for: provider.id, scheme: .dark)
+            },
+            set: { newValue in
+                guard let hex = newValue.menuBarHex else { return }
+                var updated = config
+                updated.colorHex = hex
+                settings.setMenuBarConfiguration(updated, for: provider.id)
+            }
+        )
+    }
+}
+
+private extension Color {
+    /// Serializes this color to a 6-digit sRGB hex string.
+    var menuBarHex: String? {
+        guard let rgb = NSColor(self).usingColorSpace(.sRGB) else { return nil }
+        let r = Int((rgb.redComponent * 255).rounded())
+        let g = Int((rgb.greenComponent * 255).rounded())
+        let b = Int((rgb.blueComponent * 255).rounded())
+        return String(format: "%02X%02X%02X", r, g, b)
     }
 }
 

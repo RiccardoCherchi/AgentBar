@@ -80,7 +80,7 @@ extension EnvironmentValues {
     }
 }
 
-// MARK: - ClaudeBar App Theme
+// MARK: - AgentBar App Theme
 // Adaptive purple-pink gradients with glassmorphism
 // Distinct aesthetics for light and dark modes
 

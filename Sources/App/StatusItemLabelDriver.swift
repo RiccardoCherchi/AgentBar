@@ -74,6 +74,8 @@ final class StatusItemLabelDriver {
         var additionalLabels: [MenuBarProviderLabel] = []
         var primaryProviderId: String? = nil
         var primaryProviderName: String? = nil
+        /// Custom color for the primary provider's readout (hex, no "#"), or nil.
+        var primaryColorHex: String? = nil
         var fallbackStatus: QuotaStatus
         var sessionPhase: ClaudeSession.Phase?
         var themeModeId: String
@@ -198,12 +200,14 @@ final class StatusItemLabelDriver {
             .contains { !CountdownColon.ranges(in: $0.text).isEmpty }
         let primaryProviderName = additionalLabels.isEmpty ? nil : monitor.enabledProviders
             .first { $0.id == settings.menuBarPercentageProviderId }?.name
+        let primaryColorHex = settings.menuBarConfiguration(for: settings.menuBarPercentageProviderId).colorHex
 
         return LabelContent(
             label: label,
             additionalLabels: additionalLabels,
             primaryProviderId: primaryProviderName == nil ? nil : settings.menuBarPercentageProviderId,
             primaryProviderName: primaryProviderName,
+            primaryColorHex: primaryColorHex?.isEmpty == false ? primaryColorHex : nil,
             fallbackStatus: effectiveSelectedProviderStatus,
             sessionPhase: sessionMonitor.activeSession?.phase,
             themeModeId: settings.themeMode,
@@ -263,7 +267,7 @@ final class StatusItemLabelDriver {
         let tooltip = ([primaryText].compactMap { $0 } + content.additionalLabels.map(\.text))
             .joined(separator: " | ")
         button.toolTip = tooltip.isEmpty ? nil : tooltip
-        button.setAccessibilityLabel(tooltip.isEmpty ? "ClaudeBar" : tooltip)
+        button.setAccessibilityLabel(tooltip.isEmpty ? "AgentBar" : tooltip)
     }
 
     private func resolvedTheme(for themeModeId: String) -> any AppThemeProvider {
@@ -279,6 +283,7 @@ final class StatusItemLabelDriver {
     /// no quota data exists yet. Mirrors the old SwiftUI label exactly.
     static func compose(_ content: LabelContent, theme: any AppThemeProvider) -> NSImage {
         var parts: [NSImage] = []
+        let isMultiProvider = !content.additionalLabels.isEmpty
 
         // Only surface the session glyph while Claude is actively working. A
         // finished/idle (.stopped) or .ended session must not leave a lone
@@ -288,13 +293,19 @@ final class StatusItemLabelDriver {
             parts.append(symbolImage("terminal.fill", color: NSColor(phase.color)))
         }
 
-        if let providerId = content.primaryProviderId {
+        // In multi-provider mode the provider icons are dropped: each readout
+        // carries a (optionally custom) color instead, which keeps the label
+        // narrow and lets several providers be told apart by color.
+        if !isMultiProvider, let providerId = content.primaryProviderId {
             parts.append(providerIcon(for: providerId))
         }
 
+        let primaryColor = content.primaryColorHex.flatMap(color(fromHex:))
+
         if let label = content.label {
             parts.append(quotaImage(label, stacked: content.stacked, size: content.stackedSize,
-                                    colonVisible: content.colonVisible, theme: theme))
+                                    colonVisible: content.colonVisible, theme: theme,
+                                    colorOverride: primaryColor))
         } else {
             let symbolName = theme.statusBarIconName ?? fallbackIconName(for: content.fallbackStatus)
             parts.append(symbolImage(
@@ -304,27 +315,44 @@ final class StatusItemLabelDriver {
         }
 
         for label in content.additionalLabels {
+            // A small dot instead of the old tall " | " divisor.
             parts.append(StatusBarPercentageImageRenderer.image(
-                text: " | ", color: theme.statusColor(for: label.status)
+                text: "·",
+                color: Color.secondary.opacity(0.6)
             ))
-            parts.append(providerIcon(for: label.providerId))
             parts.append(quotaImage(label.label, stacked: label.stacked, size: label.stackedSize,
-                                    colonVisible: content.colonVisible, theme: theme))
+                                    colonVisible: content.colonVisible, theme: theme,
+                                    colorOverride: label.colorHex.flatMap(color(fromHex:))))
         }
-        return hStack(parts, spacing: 3)
+        return hStack(parts, spacing: 2)
+    }
+
+    /// Parses a 6-digit hex string ("4D6BFE" or "#4D6BFE") into a color.
+    private static func color(fromHex hex: String) -> Color? {
+        let trimmed = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+        guard trimmed.count == 6, let value = UInt32(trimmed, radix: 16) else { return nil }
+        return Color(
+            red: Double((value >> 16) & 0xFF) / 255,
+            green: Double((value >> 8) & 0xFF) / 255,
+            blue: Double(value & 0xFF) / 255
+        )
     }
 
     private static func quotaImage(_ label: MenuBarLabel, stacked: Bool, size: MenuBarStackedSize,
-                                   colonVisible: Bool, theme: any AppThemeProvider) -> NSImage {
+                                   colonVisible: Bool, theme: any AppThemeProvider,
+                                   colorOverride: Color?) -> NSImage {
+        func color(for status: QuotaStatus) -> Color {
+            colorOverride ?? theme.statusColor(for: status)
+        }
         if stacked, label.segments.count == 2 {
             return StatusBarStackedImageRenderer.image(
-                top: (label.segments[0].text, theme.statusColor(for: label.segments[0].status)),
-                bottom: (label.segments[1].text, theme.statusColor(for: label.segments[1].status)),
+                top: (label.segments[0].text, color(for: label.segments[0].status)),
+                bottom: (label.segments[1].text, color(for: label.segments[1].status)),
                 size: size, colonVisible: colonVisible
             )
         }
         return StatusBarPercentageImageRenderer.image(
-            text: label.text, color: theme.statusColor(for: label.status), colonVisible: colonVisible
+            text: label.text, color: color(for: label.status), colonVisible: colonVisible
         )
     }
 

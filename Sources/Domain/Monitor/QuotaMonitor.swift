@@ -259,7 +259,8 @@ public final class QuotaMonitor {
                                             label: MenuBarLabel(text: "—", status: .healthy))
             }
             return MenuBarProviderLabel(providerId: id, providerName: provider.name, label: label,
-                                        stacked: config.stacked, stackedSize: MenuBarStackedSize(storedRawValue: config.stackedSize))
+                                        stacked: config.stacked, stackedSize: MenuBarStackedSize(storedRawValue: config.stackedSize),
+                                        colorHex: config.colorHex?.isEmpty == false ? config.colorHex : nil)
         }
     }
 

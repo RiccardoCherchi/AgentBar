@@ -4,7 +4,7 @@ import Domain
 
 /// Stores sensitive credentials as generic-password items in the user's Keychain.
 public final class KeychainCredentialRepository: CredentialRepository, @unchecked Sendable {
-    /// Shared production credential store for ClaudeBar.
+    /// Shared production credential store for AgentBar.
     public static let shared = KeychainCredentialRepository()
 
     private let service: String

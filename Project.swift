@@ -1,7 +1,7 @@
 import ProjectDescription
 
 let project = Project(
-    name: "ClaudeBar",
+    name: "AgentBar",
     options: .options(
         defaultKnownRegions: ["en"],
         developmentRegion: "en"
@@ -69,7 +69,7 @@ let project = Project(
 
         // MARK: - Main Application
         .target(
-            name: "ClaudeBar",
+            name: "AgentBar",
             destinations: .macOS,
             product: .app,
             bundleId: "com.tddworks.claudebar",
@@ -165,7 +165,7 @@ let project = Project(
             deploymentTargets: .macOS("15.0"),
             sources: ["Tests/AppTests/**"],
             dependencies: [
-                .target(name: "ClaudeBar"),
+                .target(name: "AgentBar"),
                 .target(name: "Domain"),
                 .target(name: "Infrastructure"),
             ]
@@ -199,9 +199,9 @@ let project = Project(
     ],
     schemes: [
         .scheme(
-            name: "ClaudeBar",
+            name: "AgentBar",
             shared: true,
-            buildAction: .buildAction(targets: ["ClaudeBar"]),
+            buildAction: .buildAction(targets: ["AgentBar"]),
             testAction: .targets(
                 [
                     .testableTarget(target: .target("AcceptanceTests")),
@@ -211,9 +211,9 @@ let project = Project(
                 ],
                 configuration: .debug
             ),
-            runAction: .runAction(configuration: .debug, executable: .target("ClaudeBar")),
+            runAction: .runAction(configuration: .debug, executable: .target("AgentBar")),
             archiveAction: .archiveAction(configuration: .release),
-            profileAction: .profileAction(configuration: .release, executable: .target("ClaudeBar")),
+            profileAction: .profileAction(configuration: .release, executable: .target("AgentBar")),
             analyzeAction: .analyzeAction(configuration: .debug)
         ),
     ]

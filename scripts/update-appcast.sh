@@ -25,7 +25,7 @@ APPCAST_FILE="docs/appcast.xml"
 
 # Repository the release notes link points at. In CI this is the fork/org
 # actually running the release; falls back to upstream for local runs.
-REPO_URL="https://github.com/${GITHUB_REPOSITORY:-tddworks/ClaudeBar}"
+REPO_URL="https://github.com/${GITHUB_REPOSITORY:-tddworks/AgentBar}"
 
 # Filter out Technical section (developer-focused, not for end users)
 # Removes everything from "### Technical" to the next section or end
@@ -113,7 +113,7 @@ NEW_ITEM=$(cat << EOF
             <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
 ${CHANNEL_TAG}
-            <description><![CDATA[<h2>ClaudeBar ${VERSION}</h2>
+            <description><![CDATA[<h2>AgentBar ${VERSION}</h2>
 <p><em>Released ${DISPLAY_DATE}</em></p>
 ${HTML_NOTES}
 <p><a href="${REPO_URL}/releases/tag/v${VERSION}">View full release notes</a></p>
@@ -203,7 +203,7 @@ cat > "$APPCAST_FILE" << EOF
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
     <channel>
-        <title>ClaudeBar</title>
+        <title>AgentBar</title>
 $ITEMS_TO_WRITE
     </channel>
 </rss>

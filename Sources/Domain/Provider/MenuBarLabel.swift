@@ -49,16 +49,21 @@ public struct MenuBarProviderLabel: Sendable, Equatable {
     public let stacked: Bool
     public let stackedSize: MenuBarStackedSize
     public let label: MenuBarLabel
+    /// Custom color (6-digit hex, no "#") for this provider's readout, or nil
+    /// to use the status-based color.
+    public let colorHex: String?
 
     public var text: String { "\(providerName) \(label.text)" }
     public var status: QuotaStatus { label.status }
 
     public init(providerId: String, providerName: String, label: MenuBarLabel,
-                stacked: Bool = false, stackedSize: MenuBarStackedSize = .default) {
+                stacked: Bool = false, stackedSize: MenuBarStackedSize = .default,
+                colorHex: String? = nil) {
         self.providerId = providerId
         self.providerName = providerName
         self.stacked = stacked
         self.stackedSize = stackedSize
         self.label = label
+        self.colorHex = colorHex
     }
 }

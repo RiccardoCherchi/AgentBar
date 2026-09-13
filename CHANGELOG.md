@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.0] - 2026-09-13
+
+### Added
+- A DeepSeek provider icon.
+- A custom menu bar text color per provider (Menu Bar settings). When several providers are shown, provider icons are dropped and readouts are separated by a small dot, so the label stays compact and each provider is told apart by its color.
+- The popover header now shows the selected assistant's name (e.g. "DeepSeek") instead of the app name.
+
+### Changed
+- Rebranded to **AgentBar** with a new app icon. The app now builds as `AgentBar.app`, the DMG/ZIP are named `AgentBar-*`, and the `agentbar://` URL scheme replaces `claudebar://`. The bundle identifier and `~/.claudebar` data paths are unchanged, so existing settings and logins carry over.
+
+---
+
 ## [0.6.3] - 2026-09-13
 
 ### Changed
@@ -1105,7 +1117,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Menu bar interface with quota display
 - Automatic refresh every 5 minutes
 
-[Unreleased]: https://github.com/tddworks/ClaudeBar/compare/v0.6.3...HEAD
+[Unreleased]: https://github.com/tddworks/ClaudeBar/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/tddworks/ClaudeBar/compare/v0.6.3...v0.7.0
 [0.6.3]: https://github.com/tddworks/ClaudeBar/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/tddworks/ClaudeBar/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/tddworks/ClaudeBar/compare/v0.6.0...v0.6.1

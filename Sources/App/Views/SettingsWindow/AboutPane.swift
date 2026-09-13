@@ -28,7 +28,7 @@ struct AboutPane: View {
                     .clipShape(RoundedRectangle(cornerRadius: 18))
 
                 VStack(spacing: 4) {
-                    Text("ClaudeBar")
+                    Text("AgentBar")
                         .font(.system(size: 20, weight: .bold, design: theme.fontDesign))
                         .foregroundStyle(theme.textPrimary)
 

@@ -1,4 +1,4 @@
-# ClaudeBar
+# AgentBar
 
 [![Build](https://github.com/tddworks/ClaudeBar/actions/workflows/build.yml/badge.svg)](https://github.com/tddworks/ClaudeBar/actions/workflows/build.yml)
 [![Tests](https://github.com/tddworks/ClaudeBar/actions/workflows/tests.yml/badge.svg)](https://github.com/tddworks/ClaudeBar/actions/workflows/tests.yml)
@@ -23,9 +23,9 @@ Featuring full **MacBook Touch Bar integration** with persistent, centered multi
   </tr>
 </table>
 
-### Multi-Account Switching & Multi-Window Quotas
+### Multiple Accounts & Multi-Window Quotas
 
-ClaudeBar supports seamless **Multi-Account Switching** for providers that support multiple logins (e.g. personal, work, client accounts). Configure multiple credentials in **Settings > Providers**, and quickly switch between them using the dedicated account selector dropdown.
+AgentBar supports **multiple accounts per provider** (e.g. personal, work, client). Add them under **Settings > Providers > Accounts**: DeepSeek accounts hold their own API key, and Claude/Codex accounts point at their own CLI config directory (`CLAUDE_CONFIG_DIR` / `CODEX_HOME`). Every account is probed and shown at once — there is no single "active" account to switch between — and each account can carry its own balance budget so its percentage is meaningful.
 
 Each provider displays separate progress bars for multiple quota windows—for example, tracking your **5-hour session quota** and **7-day weekly quota** simultaneously with dedicated countdown timers.
 
@@ -44,25 +44,25 @@ Every quota is tracked in real time and color-coded based on remaining capacity:
 
 ## Sponsors
 
-Some companies support ClaudeBar's open source development through [GitHub Sponsors](https://github.com/sponsors/hanrw). We'd like to give a special mention to the following sponsors:
+Some companies support AgentBar's open source development through [GitHub Sponsors](https://github.com/sponsors/hanrw). We'd like to give a special mention to the following sponsors:
 
 <table>
   <tbody>
     <tr>
       <td width="30%" align="center">
-        <a href="https://www.testmuai.com/?utm_source=ClaudeBar&utm_medium=opensourcecollab" target="_blank">
+        <a href="https://www.testmuai.com/?utm_source=AgentBar&utm_medium=opensourcecollab" target="_blank">
           <picture>
             <source media="(prefers-color-scheme: dark)" srcset="docs/sponsors/testmuai/testmuai-dark.svg"/>
             <img width="220" src="docs/sponsors/testmuai/testmuai-light.svg" alt="testmuai_logo"/>
           </picture>
         </a>
       </td>
-      <td><a href="https://www.testmuai.com/?utm_source=ClaudeBar&utm_medium=opensourcecollab">TestMu AI</a> (formerly LambdaTest) is the world's first full-stack agentic AI quality engineering platform, trusted by 18,000+ enterprises.</td>
+      <td><a href="https://www.testmuai.com/?utm_source=AgentBar&utm_medium=opensourcecollab">TestMu AI</a> (formerly LambdaTest) is the world's first full-stack agentic AI quality engineering platform, trusted by 18,000+ enterprises.</td>
     </tr>
   </tbody>
 </table>
 
-> **Editorial independence:** Sponsorship does not influence which providers ClaudeBar supports, how they are ordered in the app, or how their quota data is reported.
+> **Editorial independence:** Sponsorship does not influence which providers AgentBar supports, how they are ordered in the app, or how their quota data is reported.
 
 ## Features
 
@@ -83,7 +83,7 @@ Some companies support ClaudeBar's open source development through [GitHub Spons
 
 ## Touch Bar Integration
 
-ClaudeBar features native, system-wide Touch Bar integration for MacBook Pro models equipped with an Apple Touch Bar (including M1/M2 and Intel). This runs 100% natively inside ClaudeBar—requiring **zero third-party apps** (no BetterTouchTool or MTMR required) and **no special accessibility permissions**.
+AgentBar features native, system-wide Touch Bar integration for MacBook Pro models equipped with an Apple Touch Bar (including M1/M2 and Intel). This runs 100% natively inside AgentBar—requiring **zero third-party apps** (no BetterTouchTool or MTMR required) and **no special accessibility permissions**.
 
 ### Key Touch Bar Features
 
@@ -96,7 +96,7 @@ ClaudeBar features native, system-wide Touch Bar integration for MacBook Pro mod
   - Sleek rounded progress bars with 100% track reference and adaptive color coding (healthy blue, warning amber, critical red).
   - Reset countdown timer (e.g., `2:15`, `35m`, `3d`).
 - **Battery-Friendly & Ultra Lightweight**: Redraws only when quota state updates; consumes 0% idle CPU and zero background animation overhead.
-- **One-Tap Access**: Tap anywhere on the quota gauges on the Touch Bar to instantly summon the full ClaudeBar dropdown popover (`claudebar://open`).
+- **One-Tap Access**: Tap anywhere on the quota gauges on the Touch Bar to instantly summon the full AgentBar dropdown popover (`agentbar://open`).
 
 > [!TIP]
 > For detailed architecture, Touch Bar configuration, and customization details, see the [Full Touch Bar Guide](docs/touchbar/TOUCHBAR_GUIDE.md).
@@ -104,7 +104,7 @@ ClaudeBar features native, system-wide Touch Bar integration for MacBook Pro mod
 
 ## MacBook Notch Live Activity
 
-ClaudeBar can render Claude Code's session and quota state directly in your MacBook notch (Settings > General > Notch Live Activity):
+AgentBar can render Claude Code's session and quota state directly in your MacBook notch (Settings > General > Notch Live Activity):
 
 - **Idle Mode**: Displays your selected provider's most depleted quota at a glance.
 - **Active Session Mode**: Displays repository name, elapsed time, and the number of active subagents fanned out.
@@ -149,7 +149,7 @@ ClaudeBar can render Claude Code's session and quota state directly in your MacB
 
 Kimi supports two probe modes, configurable in **Settings > Kimi Configuration**:
 - **CLI Mode (Recommended)**: Launches interactive `kimi` and executes `/usage`. Requires `uv tool install kimi-cli` or `pip install kimi-cli`. No Full Disk Access required.
-- **API Mode**: Calls Kimi Connect-RPC directly using browser cookie auth. Requires **Full Disk Access** for ClaudeBar in **System Settings > Privacy & Security > Full Disk Access** (or set `KIMI_AUTH_TOKEN`).
+- **API Mode**: Calls Kimi Connect-RPC directly using browser cookie auth. Requires **Full Disk Access** for AgentBar in **System Settings > Privacy & Security > Full Disk Access** (or set `KIMI_AUTH_TOKEN`).
 </details>
 
 <details>
@@ -184,13 +184,13 @@ Automatically detects your active Cursor IDE installation and reads authenticati
 
 ## URL Schemes
 
-ClaudeBar supports the `claudebar://` URL scheme for quick actions from Raycast, Alfred, Touch Bar widgets, or terminal:
+AgentBar supports the `agentbar://` URL scheme for quick actions from Raycast, Alfred, Touch Bar widgets, or terminal:
 
 | URL Scheme | Action | CLI Example |
 |---|---|---|
-| `claudebar://open` | Toggles the ClaudeBar dropdown popover | `open claudebar://open` |
-| `claudebar://refresh` | Triggers immediate quota refresh for all providers | `open claudebar://refresh` |
-| `claudebar://settings` | Opens the ClaudeBar Settings window | `open claudebar://settings` |
+| `agentbar://open` | Toggles the AgentBar dropdown popover | `open agentbar://open` |
+| `agentbar://refresh` | Triggers immediate quota refresh for all providers | `open agentbar://refresh` |
+| `agentbar://settings` | Opens the AgentBar Settings window | `open agentbar://settings` |
 
 ### Notify! Setup
 
@@ -199,13 +199,13 @@ Publishing quota state to your iPhone is optional and off by default. It is conf
 1. Get [Notify!](https://getnotifyapp.com). It runs on Mac, on iOS, and on any device through web push.
 2. **For the Live Activity, open Notify! once on the iPhone or iPad you are publishing to.** One cannot be started until that device has registered a push-to-start credential, and only opening the app produces one. Skip this step if you only want the widgets, which are polled rather than pushed, and skip it for a Mac or browser ID, which cannot show a Live Activity at all.
 3. In Notify!, copy your device ID and device token.
-4. Put them in the **Device ID** and **Token** fields in ClaudeBar's Notify! settings pane and press **Save Link**. Pasting a whole notification URL into the Device ID field works too, ClaudeBar splits it across both. **Verify Device** confirms the pair against Notify! and names the phone it belongs to. Then turn **Publish to Notify!** on.
+4. Put them in the **Device ID** and **Token** fields in AgentBar's Notify! settings pane and press **Save Link**. Pasting a whole notification URL into the Device ID field works too, AgentBar splits it across both. **Verify Device** confirms the pair against Notify! and names the phone it belongs to. Then turn **Publish to Notify!** on.
 
-The Live Activity needs an iPhone or iPad ID. Notify! also issues IDs for Macs and browsers, and those keep both widgets perfectly well, but Notify! cannot start a Live Activity on one, so ClaudeBar disables just that switch and says why. A group ID receives notifications but owns no Lock Screen or Home Screen of its own, so it gets none of the three.
+The Live Activity needs an iPhone or iPad ID. Notify! also issues IDs for Macs and browsers, and those keep both widgets perfectly well, but Notify! cannot start a Live Activity on one, so AgentBar disables just that switch and says why. A group ID receives notifications but owns no Lock Screen or Home Screen of its own, so it gets none of the three.
 
-All three surfaces can be turned off separately, and you can choose which quota the gauge shows. The Home Screen widget shows the same thing as the Live Activity, and the difference is that it stays: a Live Activity appears while something is happening and then goes away, while the Home Screen widget sits where you put it and always shows the latest state. It needs a recent Notify! app, where you turn it on under **Settings > Home Screen Widgets**, and you place it yourself through iOS's own widget picker. Notify! can also switch the surface off at its own end while it is still rolling out; ClaudeBar treats that as "not yet", pauses just that widget, and carries on publishing the other two.
+All three surfaces can be turned off separately, and you can choose which quota the gauge shows. The Home Screen widget shows the same thing as the Live Activity, and the difference is that it stays: a Live Activity appears while something is happening and then goes away, while the Home Screen widget sits where you put it and always shows the latest state. It needs a recent Notify! app, where you turn it on under **Settings > Home Screen Widgets**, and you place it yourself through iOS's own widget picker. Notify! can also switch the surface off at its own end while it is still rolling out; AgentBar treats that as "not yet", pauses just that widget, and carries on publishing the other two.
 
-Note that this sends provider names, quota window labels and remaining percentages to a third-party service. The device token is stored in the Keychain, not in `~/.claudebar/settings.json`. A build you compile yourself is ad-hoc signed and the Keychain refuses it, so on those the token falls back to ClaudeBar's app credentials and the pane says so.
+Note that this sends provider names, quota window labels and remaining percentages to a third-party service. The device token is stored in the Keychain, not in `~/.claudebar/settings.json`. A build you compile yourself is ad-hoc signed and the Keychain refuses it, so on those the token falls back to AgentBar's app credentials and the pane says so.
 
 Full details: [docs/features/notify.md](docs/features/notify.md).
 
@@ -223,8 +223,8 @@ brew install --cask claudebar
 
 Download the latest release from [GitHub Releases](https://github.com/tddworks/ClaudeBar/releases/latest):
 
-- **DMG**: Open and drag ClaudeBar.app to Applications
-- **ZIP**: Unzip and move ClaudeBar.app to Applications
+- **DMG**: Open and drag AgentBar.app to Applications
+- **ZIP**: Unzip and move AgentBar.app to Applications
 
 Both are code-signed and notarized for Gatekeeper.
 
@@ -239,7 +239,7 @@ brew install tuist
 
 # Install dependencies and build
 tuist install
-tuist build ClaudeBar -C Release
+tuist build AgentBar -C Release
 ```
 
 ## Usage
@@ -248,7 +248,7 @@ After building, open the generated Xcode workspace and run the app:
 
 ```bash
 tuist generate
-open ClaudeBar.xcworkspace
+open AgentBar.xcworkspace
 ```
 
 Then press `Cmd+R` in Xcode to run. The app will appear in your menu bar. Click to view quota details for each provider.
@@ -268,7 +268,7 @@ tuist install
 
 # Generate Xcode project and open
 tuist generate
-open ClaudeBar.xcworkspace
+open AgentBar.xcworkspace
 ```
 
 ### Build & Test
@@ -284,7 +284,7 @@ tuist test
 tuist test --result-bundle-path TestResults.xcresult -- -enableCodeCoverage YES
 
 # Build release configuration
-tuist build ClaudeBar -C Release
+tuist build AgentBar -C Release
 ```
 
 ### SwiftUI Previews
@@ -295,7 +295,7 @@ After opening in Xcode, SwiftUI previews will work with `Cmd+Option+Return`. The
 
 > **Full documentation:** [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)
 
-ClaudeBar uses a **layered architecture** with `QuotaMonitor` as the single source of truth:
+AgentBar uses a **layered architecture** with `QuotaMonitor` as the single source of truth:
 
 | Layer | Purpose |
 |-------|---------|
@@ -313,7 +313,7 @@ ClaudeBar uses a **layered architecture** with `QuotaMonitor` as the single sour
 
 ## Import Terminal Theme
 
-Match ClaudeBar's appearance to your terminal. Import any `.itermcolors` file:
+Match AgentBar's appearance to your terminal. Import any `.itermcolors` file:
 
 1. Open **Settings** (gear icon)
 2. Click **Import .itermcolors**
