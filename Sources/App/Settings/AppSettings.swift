@@ -106,13 +106,17 @@ public final class AppSettings {
     }
 
     public func menuBarConfiguration(for providerId: String) -> MenuBarProviderSettings {
+        let stored = menuBarProviderSettings[providerId]
         if providerId == menuBarPercentageProviderId {
+            // The primary's quota/stacking choices live in legacy fields, but
+            // its custom color is only in the stored entry — carry it over.
             return MenuBarProviderSettings(
                 primaryQuotaKey: menuBarPercentageQuotaKey, secondaryQuotaKey: menuBarSecondaryQuotaKey,
-                stacked: menuBarStackedEnabled, stackedSize: menuBarStackedSize.rawValue
+                stacked: menuBarStackedEnabled, stackedSize: menuBarStackedSize.rawValue,
+                colorHex: stored?.colorHex
             )
         }
-        return menuBarProviderSettings[providerId] ?? MenuBarProviderSettings()
+        return stored ?? MenuBarProviderSettings()
     }
 
     public func setMenuBarConfiguration(_ config: MenuBarProviderSettings, for providerId: String) {

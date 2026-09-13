@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.1] - 2026-09-13
+
+### Fixed
+- Custom menu bar colors are now respected. Selecting or reordering providers rewrote the primary provider's config from legacy fields without the color, so every custom color could be silently dropped — readouts fell back to the status colors (green/yellow/orange). Colors now follow their provider and persist.
+
+---
+
 ## [0.7.0] - 2026-09-13
 
 ### Added
@@ -1117,7 +1124,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Menu bar interface with quota display
 - Automatic refresh every 5 minutes
 
-[Unreleased]: https://github.com/tddworks/ClaudeBar/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/tddworks/ClaudeBar/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/tddworks/ClaudeBar/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/tddworks/ClaudeBar/compare/v0.6.3...v0.7.0
 [0.6.3]: https://github.com/tddworks/ClaudeBar/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/tddworks/ClaudeBar/compare/v0.6.1...v0.6.2
