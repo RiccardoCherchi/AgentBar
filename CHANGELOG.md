@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Claude, Codex and DeepSeek now have an Accounts card in their per-provider settings form, so a single provider can track more than one login. Add named accounts with an optional email and organization, remove them, and pick which one is active; definitions persist in `settings.json` under `providers.{id}.accounts` and the active account under `providers.{id}.activeAccountId` through the existing `MultiAccountSettingsRepository`. This release manages the account list only — probing each account with its own credentials is a follow-up.
+
 ---
 
 ## [0.4.92] - 2026-09-12

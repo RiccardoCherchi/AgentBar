@@ -148,6 +148,9 @@ private struct ProviderDetailView: View {
 
     @Environment(\.appTheme) private var theme
 
+    /// Providers whose settings form offers multi-account management.
+    private static let multiAccountProviderIds: Set<String> = ["claude", "codex", "deepseek"]
+
     var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
             VStack(alignment: .leading, spacing: 14) {
@@ -181,6 +184,10 @@ private struct ProviderDetailView: View {
 
                 if provider.isEnabled {
                     configCard
+
+                    if Self.multiAccountProviderIds.contains(provider.id) {
+                        AccountManagementCard(providerId: provider.id, providerName: provider.name)
+                    }
 
                     SettingsCard {
                         SettingsFieldLabel(text: "CUSTOM WEB CARD")

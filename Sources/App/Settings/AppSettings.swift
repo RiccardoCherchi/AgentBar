@@ -433,6 +433,9 @@ public final class AppSettings {
     public var hook: HookSettingsRepository { repository }
     public var notify: NotifySettingsRepository { repository }
 
+    /// Account definitions for providers that support multiple accounts.
+    public var multiAccount: MultiAccountSettingsRepository { repository }
+
     /// Extension config repository for dynamic extension provider settings.
     public let extensionConfig: any ExtensionConfigRepository = JSONExtensionConfigRepository(
         settingsStore: .shared
