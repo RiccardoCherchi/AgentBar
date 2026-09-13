@@ -404,6 +404,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Promote CHANGELOG
+        # A push race here must not skip the appcast/Pages steps below.
+        continue-on-error: true
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           ./scripts/promote-changelog.sh "$VERSION" "$(date +%Y-%m-%d)"
@@ -430,6 +432,9 @@ jobs:
           git diff --cached --quiet \
             && echo "No CHANGELOG changes to commit" \
             || git commit -m "chore(changelog): promote [Unreleased] to v$VERSION"
+          # Rebase onto the latest main so a concurrent push cannot turn this
+          # into a non-fast-forward rejection that skips the appcast.
+          git pull --rebase origin main
           git push origin HEAD:main
 
       - name: Generate Sparkle Appcast

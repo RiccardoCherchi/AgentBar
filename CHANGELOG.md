@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.6.0] - 2026-09-13
+
 ### Added
 - Accounts are now real and monitored together. DeepSeek accounts each carry their own API key, and Claude/Codex accounts each point at their own CLI config directory (`CLAUDE_CONFIG_DIR` / `CODEX_HOME`) that you log into once. Every configured account is probed in parallel and shown as its own grouped section — the one-active-account restriction is gone. Secrets live in the Keychain, names and paths in `settings.json`.
 
@@ -1080,7 +1084,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Menu bar interface with quota display
 - Automatic refresh every 5 minutes
 
-[Unreleased]: https://github.com/tddworks/ClaudeBar/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/tddworks/ClaudeBar/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/tddworks/ClaudeBar/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/tddworks/ClaudeBar/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/tddworks/ClaudeBar/compare/v0.4.92...v0.5.0
 [0.4.92]: https://github.com/tddworks/ClaudeBar/compare/v0.4.91...v0.4.92
