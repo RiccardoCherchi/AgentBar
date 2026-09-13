@@ -351,6 +351,20 @@ public final class UserDefaultsProviderSettingsRepository: ZaiSettingsRepository
         userDefaults.object(forKey: Keys.deepseekApiKey) != nil
     }
 
+    public func deepseekBalanceBudget() -> Decimal? {
+        guard userDefaults.object(forKey: Keys.deepseekBalanceBudget) != nil else { return nil }
+        let value = userDefaults.double(forKey: Keys.deepseekBalanceBudget)
+        return value > 0 ? Decimal(value) : nil
+    }
+
+    public func setDeepSeekBalanceBudget(_ value: Decimal?) {
+        guard let value, value > 0 else {
+            userDefaults.removeObject(forKey: Keys.deepseekBalanceBudget)
+            return
+        }
+        userDefaults.set(NSDecimalNumber(decimal: value).doubleValue, forKey: Keys.deepseekBalanceBudget)
+    }
+
     // MARK: - VercelSettingsRepository
 
     public func vercelAuthEnvVar() -> String {
@@ -483,6 +497,7 @@ public final class UserDefaultsProviderSettingsRepository: ZaiSettingsRepository
         // DeepSeek settings
         static let deepseekAuthEnvVar = "providerConfig.deepseekAuthEnvVar"
         static let deepseekApiKey = "com.claudebar.credentials.deepseek-api-key"
+        static let deepseekBalanceBudget = "providerConfig.deepseekBalanceBudget"
         // Vercel AI Gateway settings
         static let vercelAuthEnvVar = "providerConfig.vercelAuthEnvVar"
         static let vercelApiKey = "com.claudebar.credentials.vercel-api-key"

@@ -799,6 +799,21 @@ extension JSONSettingsRepository: DeepSeekSettingsRepository {
     public func hasDeepSeekApiKey() -> Bool {
         getDeepSeekApiKey() != nil
     }
+
+    public func deepseekBalanceBudget() -> Decimal? {
+        guard let value: Double = store.read(key: "deepseek.balanceBudget"), value > 0 else {
+            return nil
+        }
+        return Decimal(value)
+    }
+
+    public func setDeepSeekBalanceBudget(_ value: Decimal?) {
+        guard let value, value > 0 else {
+            store.write(value: nil, key: "deepseek.balanceBudget")
+            return
+        }
+        store.write(value: NSDecimalNumber(decimal: value).doubleValue, key: "deepseek.balanceBudget")
+    }
 }
 
 // MARK: - MultiAccountSettingsRepository

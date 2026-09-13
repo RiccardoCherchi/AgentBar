@@ -117,10 +117,46 @@ struct DeepSeekUsageProbeParsingTests {
         // Then: balance is unbounded, so percent is always 100
         #expect(snapshot.quotas[0].dollarRemaining == Decimal(40))
         #expect(snapshot.quotas[0].percentRemaining == 100)
+        #expect(snapshot.quotas[0].percentRemainingIsMeaningful == false)
         #expect(snapshot.quotas[0].isDollarBased)
         // Currency is detected from the response, not hardcoded to USD
         #expect(snapshot.quotas[0].currency == "USD")
         #expect(snapshot.quotas[0].formattedDollarRemaining == "$40.00")
+    }
+
+    @Test
+    func `budget turns the balance into a meaningful percentage`() throws {
+        // Given a $40 balance and a $50 budget
+        let data = Data(Self.sampleSuccessResponse.utf8)
+
+        // When
+        let snapshot = try DeepSeekUsageProbe.parseResponse(
+            data,
+            providerId: "deepseek",
+            budget: Decimal(50)
+        )
+
+        // Then: 40 / 50 = 80%
+        #expect(snapshot.quotas[0].percentRemaining == 80)
+        #expect(snapshot.quotas[0].percentRemainingIsMeaningful)
+        #expect(snapshot.quotas[0].formattedDollarRemaining == "$40.00")
+    }
+
+    @Test
+    func `budget caps the percentage at 100 when the balance exceeds it`() throws {
+        // Given a $40 balance and a $20 budget
+        let data = Data(Self.sampleSuccessResponse.utf8)
+
+        // When
+        let snapshot = try DeepSeekUsageProbe.parseResponse(
+            data,
+            providerId: "deepseek",
+            budget: Decimal(20)
+        )
+
+        // Then
+        #expect(snapshot.quotas[0].percentRemaining == 100)
+        #expect(snapshot.quotas[0].percentRemainingIsMeaningful)
     }
 
     @Test

@@ -254,6 +254,13 @@ public protocol DeepSeekSettingsRepository: ProviderSettingsRepository {
 
     /// Checks if a DeepSeek API key is saved
     func hasDeepSeekApiKey() -> Bool
+
+    /// Gets the balance budget used to turn DeepSeek's prepaid balance into a
+    /// percentage (nil = no budget, so the percentage is not meaningful).
+    func deepseekBalanceBudget() -> Decimal?
+
+    /// Sets the balance budget (nil clears it).
+    func setDeepSeekBalanceBudget(_ value: Decimal?)
 }
 
 /// Alibaba Coding Plan-specific settings repository, extending base ProviderSettingsRepository.

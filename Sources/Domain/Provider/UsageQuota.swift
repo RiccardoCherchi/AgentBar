@@ -59,6 +59,11 @@ public struct UsageQuota: Sendable, Equatable, Hashable, Comparable {
     /// the display symbol; ignored for percentage-based quotas.
     public let currency: String?
 
+    /// Whether `percentRemaining` is a real measure. It is `false` for a
+    /// prepaid balance with no cap (DeepSeek without a budget), where the
+    /// percentage is only a stand-in and the UI should show the dollar amount.
+    public let percentRemainingIsMeaningful: Bool
+
     // MARK: - Initialization
 
     public init(
@@ -74,7 +79,8 @@ public struct UsageQuota: Sendable, Equatable, Hashable, Comparable {
         group: String? = nil,
         compactTitle: String? = nil,
         menuBarTitle: String? = nil,
-        currency: String? = nil
+        currency: String? = nil,
+        percentRemainingIsMeaningful: Bool = true
     ) {
         self.percentRemaining = min(100, percentRemaining)  // Allow negative, cap at 100
         self.quotaType = quotaType
@@ -89,6 +95,7 @@ public struct UsageQuota: Sendable, Equatable, Hashable, Comparable {
         self.compactTitle = compactTitle
         self.menuBarTitle = menuBarTitle
         self.currency = currency
+        self.percentRemainingIsMeaningful = percentRemainingIsMeaningful
     }
 
     // MARK: - Domain Behavior
@@ -110,7 +117,8 @@ public struct UsageQuota: Sendable, Equatable, Hashable, Comparable {
             group: group,
             compactTitle: compactTitle ?? self.compactTitle,
             menuBarTitle: menuBarTitle,
-            currency: currency
+            currency: currency,
+            percentRemainingIsMeaningful: percentRemainingIsMeaningful
         )
     }
 

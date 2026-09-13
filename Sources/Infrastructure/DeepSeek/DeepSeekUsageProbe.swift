@@ -101,7 +101,11 @@ public struct DeepSeekUsageProbe: UsageProbe {
             AppLog.probes.debug("DeepSeek API response: \(responseText.prefix(500))")
         }
 
-        let snapshot = try Self.parseResponse(data, providerId: "deepseek")
+        let snapshot = try Self.parseResponse(
+            data,
+            providerId: "deepseek",
+            budget: settingsRepository.deepseekBalanceBudget()
+        )
 
         AppLog.probes.info("DeepSeek probe success: \(snapshot.quotas.count) quotas found")
         for quota in snapshot.quotas {
@@ -116,7 +120,7 @@ public struct DeepSeekUsageProbe: UsageProbe {
     /// Parses the DeepSeek user balance response into a UsageSnapshot.
     /// DeepSeek reports a monetary balance with no percentage cap, so the quota
     /// uses `dollarRemaining` with `percentRemaining` pinned to 100 (AmpCode pattern).
-    static func parseResponse(_ data: Data, providerId: String) throws -> UsageSnapshot {
+    static func parseResponse(_ data: Data, providerId: String, budget: Decimal? = nil) throws -> UsageSnapshot {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
 
@@ -152,15 +156,27 @@ public struct DeepSeekUsageProbe: UsageProbe {
 
         // Balance has no cap → percent is 100 when available. When DeepSeek
         // reports is_available == false, the balance can't be used for API
-        // calls, so surface the quota as depleted.
-        let percentRemaining: Double = response.isAvailable == false ? 0 : 100
+        // calls, so surface the quota as depleted. With a configured budget the
+        // percentage becomes balance/budget, which is a real measure.
+        let percentRemaining: Double
+        let percentIsMeaningful: Bool
+        if let budget, budget > 0, response.isAvailable != false {
+            let balance = NSDecimalNumber(decimal: total).doubleValue
+            let cap = NSDecimalNumber(decimal: budget).doubleValue
+            percentRemaining = min(100, max(0, balance / cap * 100))
+            percentIsMeaningful = true
+        } else {
+            percentRemaining = response.isAvailable == false ? 0 : 100
+            percentIsMeaningful = false
+        }
         let quota = UsageQuota(
             percentRemaining: percentRemaining,
             quotaType: .modelSpecific("Balance"),
             providerId: providerId,
             resetText: breakdownText(granted: granted, toppedUp: toppedUp, currency: selected.currency),
             dollarRemaining: total,
-            currency: selected.currency
+            currency: selected.currency,
+            percentRemainingIsMeaningful: percentIsMeaningful
         )
 
         return UsageSnapshot(

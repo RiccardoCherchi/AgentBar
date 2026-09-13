@@ -13,6 +13,7 @@ struct DeepSeekConfigCard: View {
     @State private var deepSeekConfigExpanded: Bool = false
     @State private var deepSeekApiKeyInput: String = ""
     @State private var deepSeekAuthEnvVarInput: String = ""
+    @State private var deepSeekBudgetInput: String = ""
     @State private var showDeepSeekApiKey: Bool = false
     @State private var hasStoredDeepSeekApiKey: Bool = false
     @State private var isTestingDeepSeek = false
@@ -55,6 +56,9 @@ struct DeepSeekConfigCard: View {
         .onAppear {
             deepSeekAuthEnvVarInput = settings.deepseek.deepseekAuthEnvVar()
             hasStoredDeepSeekApiKey = settings.deepseek.hasDeepSeekApiKey()
+            if let budget = settings.deepseek.deepseekBalanceBudget() {
+                deepSeekBudgetInput = NSDecimalNumber(decimal: budget).stringValue
+            }
         }
     }
 
@@ -176,6 +180,40 @@ struct DeepSeekConfigCard: View {
                     .onChange(of: deepSeekAuthEnvVarInput) { _, newValue in
                         settings.deepseek.setDeepSeekAuthEnvVar(newValue)
                     }
+            }
+
+            // Optional balance budget → turns the balance into a real percentage
+            VStack(alignment: .leading, spacing: 6) {
+                Text("BALANCE BUDGET (OPTIONAL)")
+                    .font(.system(size: 9, weight: .semibold, design: theme.fontDesign))
+                    .foregroundStyle(theme.textSecondary)
+                    .tracking(0.5)
+
+                TextField("", text: $deepSeekBudgetInput, prompt: Text("20.00").foregroundStyle(theme.textTertiary))
+                    .font(.system(size: 12, weight: .medium, design: theme.fontDesign))
+                    .foregroundStyle(theme.textPrimary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(theme.glassBackground)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(theme.glassBorder, lineWidth: 1)
+                            )
+                    )
+                    .onChange(of: deepSeekBudgetInput) { _, newValue in
+                        let trimmed = newValue.trimmingCharacters(in: .whitespaces)
+                        if trimmed.isEmpty {
+                            settings.deepseek.setDeepSeekBalanceBudget(nil)
+                        } else if let value = Decimal(string: trimmed), value > 0 {
+                            settings.deepseek.setDeepSeekBalanceBudget(value)
+                        }
+                    }
+
+                Text("Set a budget to show a real percentage (balance ÷ budget) in the menu bar and provider list. Leave empty to show the balance in dollars instead.")
+                    .font(.system(size: 9, weight: .medium, design: theme.fontDesign))
+                    .foregroundStyle(theme.textTertiary)
             }
 
             // Token lookup order

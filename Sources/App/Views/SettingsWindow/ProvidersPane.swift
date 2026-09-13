@@ -82,23 +82,26 @@ private struct ProviderListRow: View {
                 Spacer()
 
                 if provider.isEnabled, let quota = lowestQuota {
+                    let showsBalance = quota.isDollarBased && !quota.percentRemainingIsMeaningful
                     VStack(alignment: .trailing, spacing: 4) {
-                        Text("\(Int(quota.percentRemaining))%")
+                        Text(showsBalance ? (quota.formattedDollarRemaining ?? "—") : "\(Int(quota.percentRemaining))%")
                             .font(.system(size: 12, weight: .bold, design: theme.fontDesign))
                             .foregroundStyle(theme.statusColor(for: quota.status))
                             .monospacedDigit()
 
-                        GeometryReader { geo in
-                            ZStack(alignment: .leading) {
-                                Capsule()
-                                    .fill(theme.progressTrack)
+                        if !showsBalance {
+                            GeometryReader { geo in
+                                ZStack(alignment: .leading) {
+                                    Capsule()
+                                        .fill(theme.progressTrack)
 
-                                Capsule()
-                                    .fill(theme.statusColor(for: quota.status))
-                                    .frame(width: geo.size.width * quota.percentRemaining / 100)
+                                    Capsule()
+                                        .fill(theme.statusColor(for: quota.status))
+                                        .frame(width: geo.size.width * quota.percentRemaining / 100)
+                                }
                             }
+                            .frame(width: 80, height: 4)
                         }
-                        .frame(width: 80, height: 4)
                     }
                 }
 
