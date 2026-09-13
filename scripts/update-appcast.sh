@@ -23,6 +23,10 @@ mkdir -p docs
 
 APPCAST_FILE="docs/appcast.xml"
 
+# Repository the release notes link points at. In CI this is the fork/org
+# actually running the release; falls back to upstream for local runs.
+REPO_URL="https://github.com/${GITHUB_REPOSITORY:-tddworks/ClaudeBar}"
+
 # Filter out Technical section (developer-focused, not for end users)
 # Removes everything from "### Technical" to the next section or end
 # Also converts **bold** to plain text for cleaner user display
@@ -112,7 +116,7 @@ ${CHANNEL_TAG}
             <description><![CDATA[<h2>ClaudeBar ${VERSION}</h2>
 <p><em>Released ${DISPLAY_DATE}</em></p>
 ${HTML_NOTES}
-<p><a href="https://github.com/tddworks/ClaudeBar/releases/tag/v${VERSION}">View full release notes</a></p>
+<p><a href="${REPO_URL}/releases/tag/v${VERSION}">View full release notes</a></p>
 ]]></description>
             <enclosure url="${DOWNLOAD_URL}" length="${FILE_SIZE}" type="application/octet-stream" sparkle:edSignature="${ED_SIGNATURE}"/>
         </item>
